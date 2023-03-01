@@ -45,10 +45,10 @@ $git remote add origin https:/jparep/ma321.git
 ## GIT PUSH ISSUE
 # push to github with url for one time only
 $git push git@jp:joshuaparep/ma321.git
-#After that git push without url for latter push
+# After that git push without url for latter push
 $git push
 
-#check status of changes if made in the file
+# check status of changes if made in the file
 $git status
 $git diff
 
