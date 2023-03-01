@@ -21,3 +21,8 @@ $git remote -v #check whether upstream added
 $git fetch upstream # get the updated ones from origon
 $git checkout main #go to main branch
 $git merge upstrea/main #merge project from origin to yours to synch
+
+# ISSUE WITH REMOTE
+# remove and Add new remote
+$git remote -rm origin   #remote remote origin
+$git remote add origin https:/jparep/ma321.git #add remote origin
