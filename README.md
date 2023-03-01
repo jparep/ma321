@@ -48,6 +48,9 @@ $git push git@jp:joshuaparep/ma321.git
 #After that git push without url for latter push
 $git push
 
+#Force push of still issue from origin
+$git push -f orgin main
+
 #check status of changes if made in the file
 $git status
 $git diff
