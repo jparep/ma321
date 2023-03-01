@@ -30,18 +30,23 @@ $git remote -v
 $git remote add upstream git@jparep:jparep/ma321.git
 #check whether upstream added
 $git remote -v 
-# get the updated ones from origon
+# get the updated ones from origon only fork projects
 $git fetch upstream 
 # go to main branch
 $git checkout main 
-# merge project from origin to yours to synch
-$git merge upstrea/main  
+# merge project from origin to yours to sync
+# merge only for fork projects
+$git merge upstrea/main 
+# merge for origin
+$git merge origin 
 
 # ISSUE WITH REMOTE
 # remove and Add new remote
-$git remote -rm origin
-# add remote origin
-$git remote add origin https:/jparep/ma321.git 
+$git remote remove origin
+# add remote origin to your local
+$git remote add origin git@jparep:jparep/ma321.git
+# OR (jparep afet @ is configured as alias in config file)
+$git remote set-url origin git@jparep:jparep/ma321.git
 
 ## GIT PUSH ISSUE
 # push to github with url for one time only
