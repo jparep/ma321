@@ -26,7 +26,8 @@ $git config --list
 ## TO GET UPDATED PROJECT FILES
 # check remote
 $git remote -v  
-$git remote add upstream https://github.com/jparep/ma321.git
+# add url to use ssh key instead https which require github login 
+$git remote add upstream git@jparep:jparep/ma321.git
 #check whether upstream added
 $git remote -v 
 # get the updated ones from origon
