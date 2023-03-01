@@ -37,7 +37,7 @@ $git checkout main
 # merge project from origin to yours to sync
 # merge only for fork projects
 $git merge upstrea/main 
-# merge for origin
+# merge for origin before working on the project
 $git merge origin 
 
 # ISSUE WITH REMOTE
