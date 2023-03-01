@@ -1,3 +1,8 @@
+#Packages neededin this project
+$tidyverse
+$dplyr
+$ggplot2
+
 ## Basic GIT commands to set up and acces MA321 Group Project
 
 # Check for an exisitng SH key
