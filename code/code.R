@@ -41,3 +41,7 @@ sapply(data, function(x) sum(is.na(x))) #Missing data for each column
 boxplot(data$SalePrice,
         ylab = "SalePrice"
 )
+=======
+hist(data$SalePrice,
+  xlab = "SalePrice",
+  breaks = sqrt(nrow(data)))
