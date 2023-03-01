@@ -37,3 +37,6 @@ sapply(data, function(x) sum(is.na(x))) #Missing data for each column
 #Task (1.E) - Handle missing values
 
 #Task (1.F) - Check Outliers
+hist(data$SalePrice,
+  xlab = "SalePrice",
+  breaks = sqrt(nrow(data)))
