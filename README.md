@@ -1,5 +1,17 @@
 ## BAsic GIT COMMANDS TO SETUO NAD CONNECT MA321 GROUPPROJECT
 
+#Check for an exisitng SH key
+$ls -al ~/.ssh
+# Create file .ssh file directory of doesn't exist
+$mkdir $HOME/.ssh
+
+#1. Generate SSH Key
+$ ssh-keygen -t ed25519 -C "parepson@gmail.com"
+#2. start the ssh-agent in the background
+$ eval "$(ssh-agent -s)"
+#3. Add private SSH private key to ssh-agent
+$ ssh-add ~/.ssh/id_ed25519
+
 # Copy SSHkey to github command
 $pbcopy < ~/.ssh/id_rsa.pub
 
@@ -33,3 +45,4 @@ $git remote add origin https:/jparep/ma321.git
 ## GIT PUSH ISSUE
 # push to github with url
 $git push git@jp:joshuaparep/ma321.git
+
