@@ -40,7 +40,9 @@ $git merge upstrea/main
 # remove and Add new remote
 $git remote remove origin
 # add remote origin to your local
-$git remote add origin git@jparep:jparep/ma321.git 
+$git remote add origin git@jparep:jparep/ma321.git
+# OR (jparep afet @ is configured as alias in config file)
+$git remote set-url origin git@jparep:jparep/ma321.git
 
 ## GIT PUSH ISSUE
 # push to github with url for one time only
