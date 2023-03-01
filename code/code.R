@@ -16,6 +16,7 @@ head(data)
 names(data)
 dim(data)
 summary(data)
+View(data)
 
 
 #Task (1.C) - graphically Description
@@ -37,6 +38,10 @@ sapply(data, function(x) sum(is.na(x))) #Missing data for each column
 #Task (1.E) - Handle missing values
 
 #Task (1.F) - Check Outliers
+boxplot(data$SalePrice,
+        ylab = "SalePrice"
+)
+=======
 hist(data$SalePrice,
   xlab = "SalePrice",
   breaks = sqrt(nrow(data)))
