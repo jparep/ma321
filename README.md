@@ -39,8 +39,8 @@ $git merge upstrea/main
 # ISSUE WITH REMOTE
 # remove and Add new remote
 $git remote remove origin
-# add remote origin
-$git remote add origin git@jparep:/jparep/ma321.git 
+# add remote origin to your local
+$git remote add origin git@jparep:jparep/ma321.git 
 
 ## GIT PUSH ISSUE
 # push to github with url for one time only
