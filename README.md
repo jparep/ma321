@@ -26,3 +26,6 @@ $git merge upstrea/main #merge project from origin to yours to synch
 # remove and Add new remote
 $git remote -rm origin   #remote remote origin
 $git remote add origin https:/jparep/ma321.git #add remote origin
+
+# GIT PUSH ISSUE
+$git push -u origin master
