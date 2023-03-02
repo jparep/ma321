@@ -1,6 +1,6 @@
 #MA321 ASSIGNMENT
 # Load the dataset
-data <- read.csv("house-data.csv")
+data <- read.csv("house_data.csv")
 attach(data)
 # Viewing the first few rows of the dataset
 head(data)
