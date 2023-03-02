@@ -11,9 +11,9 @@ that you deem appropriate.
     - Poor if the overall condition is between 1 to 3.
     - Average if the overall condition is between 4 and 6.
     - Good if the overall condition is between 7 and 10
-        - Fit a logistic regression model which predicts the overall condition (OverallCond) of a
+    - Fit a logistic regression model which predicts the overall condition (OverallCond) of a
 house.
-        - Carry out a similar study using a different classification method to
+    - Carry out a similar study using a different classification method to
 classify the house condition.
 
 3. Predicting house prices:
@@ -82,10 +82,10 @@ _Below is an example of how you can on install and set up your workdirectory.
     - [ ] Regression Modelling
     - [ ] Apply diffent classification model
 
-- [] Cross Validation
-- [] Prediction
-- [] Apply re-sampling and estimate test error
-- [] Identify and suggest research question
+- [ ] Cross Validation
+- [ ] Prediction
+- [ ] Apply re-sampling and estimate test error
+- [ ] Identify and suggest research question
 
 
 <!-- CONTRIBUTING -->
