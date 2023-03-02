@@ -115,7 +115,7 @@ Project Link: [https://github.com/jparep/ma321.git](https://github.com/jparep/ma
 
 Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
 
-* [GitHub Docs](https://docs.github.com/)
+* [Github Docs](https://docs.github.com/)
 * [Github](https://github.com/)
 * [Stackoverflow](https://stackoverflow.com/)
 
