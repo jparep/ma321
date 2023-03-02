@@ -1,34 +1,41 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
+This projects uses marchine learning techniques to help estate agencies understand the housing market.
+In this project uses house_data.csv dataset to statisitically analyse fromt the pointof view of classification, prediction and subsequently validation.
 
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should implement DRY principles to the rest of your life :smile:
+Here are the manjor project objectives:
+1.  Provide numerical and graphical summaries of the data set and make any initial comments
+that you deem appropriate.
+2.  Divide houses based on their overall condition (OverallCond) as follows:
+    - Poor if the overall condition is between 1 to 3.
+    - Average if the overall condition is between 4 and 6.
+    - Good if the overall condition is between 7 and 10
+        - Fit a logistic regression model which predicts the overall condition (OverallCond) of a
+house.
+        - Carry out a similar study using a different classification method to
+classify the house condition.
 
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have contributed to expanding this template!
+3. Predicting house prices:
+    -  Employ 2 different methods in order to predict house prices. Justify the
+choice of model and comment on the results obtained.
+    - Use two re-sampling methods of choice to estimate the test error associated with
+fitting these particular methods chosen in 3(a) on a set of observations. Comment on
+the results you obtained.
 
-Use the `BLANK_README.md` to get started.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+4. Using this data set, house-data.csv, what else would be interesting in investigating? Identify
+a ‘research question’ in relation to housing data and employ different methodology to answer this question. 
 
 
 ### Built With
 
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+This project build with R in RStudio.
 
 
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+This is instruction to project implementation.
 
 ### Prerequisites
 
