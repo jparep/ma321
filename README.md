@@ -91,10 +91,9 @@ _Below is an example of how you can on install and set up your workdirectory.
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+If you have a suggestion that would make this better, please fork the repo and create a pull request.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature`)
@@ -115,7 +114,7 @@ Project Link: [https://github.com/jparep/ma321.git](https://github.com/jparep/ma
 
 Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
 
-* [GitHub Docs](https://docs.github.com/)
+* [GiTHub Docs](https://docs.github.com/)
 * [Github](https://github.com/)
 * [Stackoverflow](https://stackoverflow.com/)
 
