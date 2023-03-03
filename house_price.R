@@ -2,6 +2,10 @@
 #install.packages("corrplot") #v0.92 (under R version 4.2.2)
 #install.packages("tidyverse")
 #install.packages("dplyr")
+#install.packages("VIM")
+install.packages("magrittr")
+library("magrittr")
+library("VIM")
 library("dplyr")
 library("tidyverse")
 library("corrplot")
@@ -41,6 +45,32 @@ missing_counts <- colSums(is.na(data))
 missing_var_names <- names(missing_counts[missing_counts > 0])
 missing_var_names
 
+
+#GRadphical Description of Missing Data
+#build function that counts missing values
+count_nas <- function(data){
+  
+  variable_name_column <- c()
+  number_missing_column <- c()
+  
+  for (i in 2:ncol(data)){
+    variable_name <- colnames(data[i])
+    number_missing <- sum(is.na(data[i]))
+    variable_name_column <- c(variable_name_column,variable_name)
+    number_missing_column <- c(number_missing_column,number_missing)
+  }
+  
+  missing_table <- data.frame(variable_name_column,number_missing_column)
+  missing_table <- missing_table %>% mutate(percentage=round(number_missing_column*100/nrow(data),2)) %>% arrange(desc(percentage))
+  missing_table
+}
+
+#chart for missing values
+aggr(data[-1], prop = T, numbers = T, cex.axis=.5, cex.numbers = 0.1,
+     ylab=c("Proportion of missingness","Missingness Pattern"),
+     labels=names(data[-1]))
+
+
 ###########################################
 # Create a histogram of a variable using ggplot2
 library(ggplot2)
@@ -68,7 +98,6 @@ CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.5)))
 cor_numVar <- cor_numVar[CorHigh, CorHigh]
 
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
-
 
 
 #########################
