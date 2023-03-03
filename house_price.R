@@ -104,12 +104,13 @@ corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 # QUESTION 2
 #########################
 #Group houses based on Overall condition
-poor_cond <- data$OverallCond[data$OverallCond >=1 & data$OverallCond <=3]
-avg_Cond <- data$OverallCond[data$OverallCond > 3 & data$OverallCond <=6]
-good_cond <- data$OverallCond[data$OverallCond > 6  & data$OverallCond <=10]
+unique(data$OverallCond)
 
-poor_cond
-avg_Cond
-good_cond
+data$HouseCondition <- with(data, ifelse(OverallCond >6, "High",
+                                         ifelse(OverallCond >3, "Midium", "Low")))
+df <- data %>%
+  select("OverallCond", "HouseCondition")
 
+df
+  
 
