@@ -3,13 +3,17 @@
 #install.packages("tidyverse")
 #install.packages("dplyr")
 #install.packages("VIM")
-install.packages("magrittr")
+#install.packages("magrittr")
+
 library("magrittr")
 library("VIM")
 library("dplyr")
 library("tidyverse")
 library("corrplot")
 
+#############################################################################
+### Q1 Statistical & Visual DEscriptive Aanalysis
+#############################################################################
 # Load the dataset
 data <- read.csv("house_data.csv")
 attach(data)
@@ -100,9 +104,20 @@ cor_numVar <- cor_numVar[CorHigh, CorHigh]
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 
 
-#########################
-# QUESTION 2
-#########################
+#IMPUTATE DATA
+#mpute missing data - In this case, the random forest mice function is used. Random seed set to 5
+imputed_data <- mice(data, m=5, method = "rf")
+compplete_imputed_data <- complete(imputed_data,3) # use 3rd cycle complete imputed dataset
+summary(complete(compplete_imputed_data)) ##Summary for Descriptive Statistical Analysis
+stripplot(imputed_data, pch = 20, cex = 1.2) #illustrate imputed data
+
+# Check for any NA after imputation?
+sapply(imputed_data, function(x) sum(is.na(x))) 
+compplete_imputed_data$imp #Checking on the imputed values to diagnose any issues
+
+#############################################################################
+###  QUESTION 2: Logistic Regression to Classifiy Overall House Condition
+#############################################################################
 #Group houses based on Overall condition
 unique(data$OverallCond)
 
@@ -113,4 +128,25 @@ df <- data %>%
 
 df
   
+
+#############################################################################
+###  QUESTION 3: Predicting House Prices
+#############################################################################
+
+
+
+
+
+#############################################################################
+###  QUESTION 4: Research Question in Relation to House Data
+#############################################################################
+
+
+
+
+
+
+
+
+
 
