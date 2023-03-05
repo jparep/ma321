@@ -22,7 +22,11 @@ glimpse(df)
 str(df)
 summary(df) #Numerical summaries of the variables in the dataset
 
-#checking for missing variables 
+##check duplicate
+duplicated(df)
+df[duplicated(ddf),]
+
+### Missing Value Analysis - check NAs
 sum(is.na(df)) # 5,910 total NAs
 df_naCols <- which(colSums(is.na(df))>0) # Identify variables with NAs
 sort(colSums(sapply(df[df_naCols],is.na)), decreasing = TRUE) # 10 variables with NAs (Total NAs ordered in Dec)
@@ -82,9 +86,9 @@ df1 <- subset(df, select = -c(PoolQC, MiscFeature, Alley, Fence))
 df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
 str(df1) # Show char variables converted to factor
 
-# Subset numerical variables that require factoring (7 num variabels require factoring here)
+# Subset numerical variables that require factoring (9 num variabels require factoring here)
 num_var_factor <-  c("OverallQual", "OverallCond", "FullBath", "BedroomAbvGr",
-                     "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces")
+                     "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces", "MoSold", "YrSold")
 
 # Factor numerical variables
 df1[num_var_factor] <- lapply(df1[num_var_factor], factor)
@@ -103,6 +107,52 @@ stripplot(imp_df, pch = 20, cex = 1.2) #illustrate imputed data
 sapply(comppleted_imp_df, function(x) sum(is.na(x))) # good to go!
 View(comppleted_imp_df)
 
+
+#############################################################################
+############################################
+##### CHECKING AND HANDLING OUTLIERS #######
+############################################
+length(select_if(df1, is.numeric)) # 14 numberical variables
+names(select_if(df1, is.numeric))
+
+diagnose_numeric(comppleted_imp_df) %>% 
+  filter(minus > 0 | zero > 0) %>% 
+  select(variables, median, zero:outlier) %>% 
+  flextable()
+
+# Take average for the outliers to check the influence on variables
+diagnose_outlier(comppleted_imp_df) %>% flextable()
+# Get descriptive statistics after imputed
+describe(comppleted_imp_df) %>% flextable()
+
+###Normality Test
+normality(comppleted_imp_df) %>% flextable()
+
+# Check outliers graphically for all the numerical variables 
+# Since outliers in these numerical var contains important info, they are retained
+comppleted_imp_df %>% select(SalePrice) %>%  plot_outlier()   
+comppleted_imp_df %>% select(LotFrontage) %>%  plot_outlier() 
+comppleted_imp_df %>% select(LotArea) %>%  plot_outlier()     
+comppleted_imp_df %>% select(YearBuilt) %>%  plot_outlier()   
+comppleted_imp_df %>% select(MasVnrArea) %>%  plot_outlier()
+comppleted_imp_df %>% select(TotalBsmtSF) %>%  plot_outlier() 
+comppleted_imp_df %>% select(X2ndFlrSF) %>%  plot_outlier()   
+comppleted_imp_df %>% select(LowQualFinSF) %>%  plot_outlier()
+comppleted_imp_df %>% select(GrLivArea) %>%  plot_outlier()   
+comppleted_imp_df %>% select(GarageArea) %>%  plot_outlier()
+comppleted_imp_df %>% select(PoolArea) %>%  plot_outlier()    
+comppleted_imp_df %>% select(MiscVal) %>%  plot_outlier()     t
+
+########################################
+######  Collinearity 
+###########################################
+install.packages("DataExplorer")
+library(DataExplorer)
+plot_correlation(na.omit(comppleted_imp_df), maxcat = 5L)
+
+df_scaled <- comppleted_imp_df %>% mutate_if(is.numeric, scale)
+df_scaled
+
 ##############  Q1 END #########################################################
 
 #############################################################################
@@ -111,13 +161,31 @@ View(comppleted_imp_df)
 #Group houses based on Overall condition
 unique(comppleted_imp_df$OverallCond)
 
-comppleted_imp_df$HouseCondition <- with(df, ifelse(OverallCond >6, "High",
+comppleted_imp_df$HouseClass <- with(df, ifelse(OverallCond >6, "High",
                                          ifelse(OverallCond >3, "Midium", "Low")))
 df2 <- comppleted_imp_df %>%
-  select("OverallCond", "HouseCondition")
+  select("OverallCond", "HouseClass")
 
-df2
+df2 #Check all Houses grouped
+
+############## Training Data ###############################
+#create a list of random number ranging from 1 to number of rows from actual data 
+#and 80% of the data into training data 
+
+# TO DO - NEED TO SELECT FEATURES FIRST
+count(df2, HouseClass) #Check the classification distribution
+
+sample_df = sort(sample(nrow(comppleted_imp_df), nrow(comppleted_imp_df)*.8))
+
+#creating training data set by selecting the output row values
+train <- comppleted_imp_df[sample_df,]
+
+#creating test data set by not selecting the output row values
+test <- comppleted_imp_df[-sample_df,]
   
+dim(train)
+dim(test)
+
 
 #############################################################################
 ###  QUESTION 3: Predicting House Prices
