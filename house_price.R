@@ -8,30 +8,31 @@ library("ggplot2")
 library("VIM")
 
 
-#############################################################################
-### Q1 Statistical & Visual DEscriptive Aanalysis
-#############################################################################
 # Load the dataset
 df <- read.csv("house_data.csv")
 
+############# STATISTICAL Descriptive ANALYSIS ##############################
 attach(df)
 head(df)  # Viewing the first few rows of the dataset
 names(df) # Viewing the names of the variables
 dim(df)   #An overview of the dataset's structure
+view(df)
 glimpse(df)
 str(df)
 summary(df) #Numerical summaries of the variables in the dataset
-
+introduce(df) #Get more detail about row, columns and NAs
 ##check duplicate
 duplicated(df)
 df[duplicated(ddf),]
-
 ### Missing Value Analysis - check NAs
 sum(is.na(df)) # 5,910 total NAs
 df_naCols <- which(colSums(is.na(df))>0) # Identify variables with NAs
 sort(colSums(sapply(df[df_naCols],is.na)), decreasing = TRUE) # 10 variables with NAs (Total NAs ordered in Dec)
 
+################ GRAPHICAL DESCRIPTIVE ANALYSIS ###############################
 # V1 - NA graphical description
+plot_histogram(df) #Histogram for all the numberical variables
+
 md.pattern(df) #
 
 # V1 - NA graphical description
@@ -49,54 +50,40 @@ aggr_plot <- aggr(df, col=c('navyblue','red'),
                   ylab=c("Histogram of Missing data","Pattern"))
 
 
-# Identifying and displaying numerical variables
-#Correlation with SalePrice
+########## CORRELATION ########################################################
+#Correlation with 
 numericVars <- which(sapply(df, is.numeric)) #index vector numeric variables
 numericVarNames <- names(numericVars) #saving names vector for use later on
 all_numVar <- df[, numericVars]
 cor_numVar <- cor(all_numVar, use="pairwise.complete.obs") #correlations of all numeric variables
-
 #sort on decreasing correlations with SalePrice
 cor_sorted <- as.matrix(sort(cor_numVar[,'SalePrice'], decreasing = TRUE))
 #select only high corelations
 CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.5)))
 cor_numVar <- cor_numVar[CorHigh, CorHigh]
-
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 
-#IMPUTATE DATA
-#mpute missing data - In this case, the random forest mice function is used. Random seed set to 5
-imputed_data <- mice(df, m=5, method = "rf")
-compplete_imputed_data <- complete(imputed_data,3) # use 3rd cycle complete imputed dataset
-summary(complete(compplete_imputed_data)) ##Summary for Descriptive Statistical Analysis
-stripplot(imputed_data, pch = 20, cex = 1.2) #illustrate imputed data
 
-# Check for any NA after imputation?
-sapply(imputed_data, function(x) sum(is.na(x))) 
-compplete_imputed_data$imp #Checking on the imputed values to diagnose any issues
-
-############ Q1 TEMP ########################################################
-#### Handled NA and outliers aid my work in the interim #####################
-
+################### CREATE SUBSET & DESELECT VARIABLES #########################
 # Drop variables with 80% missing data (4 variables here have NA > 80%)
-df1 <- subset(df, select = -c(PoolQC, MiscFeature, Alley, Fence))
+# Also, deselecting variables like month Sold var which does not add any value in House Condition
+df1 <- subset(df, select = -c(PoolQC, MiscFeature, Alley, Fence, MoSold, YrSold))
 
-# Before imputing remaining NAs, factor categorical variables first
 # Factor all char variables
 df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
 str(df1) # Show char variables converted to factor
 
 # Subset numerical variables that require factoring (9 num variabels require factoring here)
 num_var_factor <-  c("OverallQual", "OverallCond", "FullBath", "BedroomAbvGr",
-                     "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces", "MoSold", "YrSold")
+                     "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces")
 
 # Factor numerical variables
 df1[num_var_factor] <- lapply(df1[num_var_factor], factor)
 str(df1) # Show numerical variables converted to factor
 
+################ IMPUTAE REMAINING MISSING VALUES #############################
 # Graphically illustrate remaining NAs to be imputed
 md.pattern(df1)
-
 #impute NAs - In this case, the random forest mice function is used. Random m set to 5
 imp_df <- mice(df1, seed = 123, m=5, method = "rf")
 comppleted_imp_df <- complete(imp_df,3) # use 3rd cycle complete imputed dataset
@@ -105,8 +92,8 @@ stripplot(imp_df, pch = 20, cex = 1.2) #illustrate imputed data
 
 # Check for any NA after imputation?
 sapply(comppleted_imp_df, function(x) sum(is.na(x))) # good to go!
+sum(is.na(comppleted_imp_df))
 View(comppleted_imp_df)
-
 
 #############################################################################
 ############################################
@@ -146,12 +133,14 @@ comppleted_imp_df %>% select(MiscVal) %>%  plot_outlier()     t
 ########################################
 ######  Collinearity 
 ###########################################
-install.packages("DataExplorer")
+#install.packages("DataExplorer")
 library(DataExplorer)
 plot_correlation(na.omit(comppleted_imp_df), maxcat = 5L)
 
 df_scaled <- comppleted_imp_df %>% mutate_if(is.numeric, scale)
-df_scaled
+
+summary(df_scaled)
+
 
 ##############  Q1 END #########################################################
 
@@ -161,20 +150,33 @@ df_scaled
 #Group houses based on Overall condition
 unique(comppleted_imp_df$OverallCond)
 
-comppleted_imp_df$HouseClass <- with(df, ifelse(OverallCond >6, "High",
-                                         ifelse(OverallCond >3, "Midium", "Low")))
-df2 <- comppleted_imp_df %>%
-  select("OverallCond", "HouseClass")
+comppleted_imp_df$OverallCond <- with(df, ifelse(OverallCond >6,"Good",
+                                         ifelse(OverallCond >3, "Average", "Poor")))
 
-df2 #Check all Houses grouped
+###### SELECT NUMERICAL VARIABLES ########
+num_df <- unlist(lapply(comppleted_imp_df, is.numeric))
+num_df <- comppleted_imp_df[, num_df]
+
+#Remove ID Column
+num_df <- num_df %>% select(-Id)
+str(num_df)
+
+# Find 0's in num var
+colSums(num_df == 0)
+
+######### SUBSET CATEGORICAL VARIABLEA ########
+cat_df <- unlist(lapply(comppleted_imp_df, is.factor))
+cat_df <- comppleted_imp_df[, cat_df]
+str(cat_df)
+
+
+
+# TO DO - NEED TO SELECT FEATURES FIRST
+count(comppleted_imp_df, OverallCond) #Check the classification distribution
 
 ############## Training Data ###############################
 #create a list of random number ranging from 1 to number of rows from actual data 
 #and 80% of the data into training data 
-
-# TO DO - NEED TO SELECT FEATURES FIRST
-count(df2, HouseClass) #Check the classification distribution
-
 sample_df = sort(sample(nrow(comppleted_imp_df), nrow(comppleted_imp_df)*.8))
 
 #creating training data set by selecting the output row values
@@ -182,10 +184,11 @@ train <- comppleted_imp_df[sample_df,]
 
 #creating test data set by not selecting the output row values
 test <- comppleted_imp_df[-sample_df,]
-  
+ 
+dim(df) 
 dim(train)
 dim(test)
-
+names(df)
 
 #############################################################################
 ###  QUESTION 3: Predicting House Prices
@@ -199,12 +202,10 @@ dim(test)
 ###  QUESTION 4: Research Question in Relation to House Data
 #############################################################################
 
+library("car")
 
-
-
-
-
-
-
+mod <- glm(SalePrice ~ LotFrontage +  LotArea + OverallQual + YearBuilt + MasVnrArea + TotalBsmtSF + 
+  X1stFlrSF + X2ndFlrSF + LowQualFinSF + GrLivArea + FullBath + BedroomAbvGr + KitchenAbvGr + TotRmsAbvGrd + 
+  Fireplaces + GarageArea + PoolArea + MiscVal + SalePrice ,data = num_df, family = binomial(link = "logit"))
 
 
