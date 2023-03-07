@@ -249,39 +249,59 @@ index <- sample(nrow(df0),nrow(df0)*0.80)
 credit_train = df0[index,]
 credit_test = df0[-index,]
 
-# train model
-nothing <- glm(OverallCond ~ 1,family="binomial", data=df0)
-
-fulMod <- glm(OverallCond~., family="binomial", data=df0)
+#############################################################################
+###  QUESTION 3: Predicting House Prices
+#############################################################################
+# FEATURE SELECTION - for Overall Condition rating classification
+fullMod1 <- glm(OverallCond~., family="binomial", data=df0)
 
 mod1 <- glm(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
                   MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
                   YrSold + SaleType + SalePrice, family="binomial", data=df0)
 
 # Backwards selection is the default
-sMod = step(fulMod) 
+step1 = step(fullMod) 
 ### Fianl MOdel from step - AIC  1083.33
-stepMod <- glm(OverallCond ~ Street + YearBuilt + MasVnrArea + ExterCond + Foundation + 
+stepMod1 <- glm(OverallCond ~ Street + YearBuilt + MasVnrArea + ExterCond + Foundation + 
                              BsmtQual + BsmtCond + TotalBsmtSF + X1stFlrSF + X2ndFlrSF + 
                              FullBath + BedroomAbvGr + KitchenQual + Fireplaces + GarageArea + 
                              GarageCond + YrSold + SalePrice,  family="binomial", data=df0)
 
-
-summary(nothing) #AIC 1,562.5
-summary(fulMod) # AIC 1, 165.9
+summary(fullMod1) # AIC 1, 165.9
 summary(mod1)    #AIC 1, 203.9
-summary(sMod)   #AIC  1, 083.33
-summary(stepMod)#AIC  1, 083
-
-
-
-
-
+summary(step1)   #AIC  1, 083.33
+summary(stepMod1)#AIC  1, 083
 
 
 #############################################################################
-###  QUESTION 3: Predicting House Prices
+###  QUESTION 4: Research Question in Relation to House Data
 #############################################################################
+###
+#FEATURE SELECTION 2 - for SalePrice prediction
+##
+
+fullMod2 <- lm(df0$SalePrice~., family="binomial", data=df0)
+summary(fullMod2)
+mod2 <- lm(SalePrice ~ LotArea + Street + LotConfig + Neighborhood + Condition1 + Condition2 +
+             BldgType + HouseStyle + OverallCond + RoofMatl + MasVnrArea + ExterQual + BsmtQual +
+             TotalBsmtSF +GrLivArea + BedroomAbvGr + KitchenAbvGr + KitchenQual + Functional + Fireplaces +
+             GarageArea + SaleType + SaleCondition, family="binomial", data=df0)
+
+# Backwards selection is the default
+step2 = step(fullMod2) 
+### Fianl MOdel from step - AIC  1083.33
+stepMod2 <- lm(df0$SalePrice ~ LotArea + Street + LotConfig + Neighborhood + 
+                  Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + 
+                  OverallCond + YearBuilt + RoofMatl + MasVnrArea + ExterQual + 
+                  BsmtQual + BsmtCond + TotalBsmtSF + X2ndFlrSF + GrLivArea + 
+                  FullBath + BedroomAbvGr + KitchenAbvGr + KitchenQual + Functional + 
+                  Fireplaces + GarageArea + SaleType + SaleCondition,family="binomial", data=df0 )
+
+summary(fullMod2) # A-R^2 = 0.8982 
+summary(mod2)    # A-R^2 = 0.8902 
+summary(step2)   # A-R^2 = 0.8985   AIC = 29710.05
+summary(stepMod2)# A-R^2 = 0.8985 
+
 
 summary(df$SalePrice)
 ggplot(df,aes(x = SalePrice) )+ geom_histogram(bins = 30, fill= 'blue')
@@ -291,11 +311,9 @@ library("gridExtra")
 
 head(df)
 
-#############################################################################
-###  QUESTION 4: Research Question in Relation to House Data
-#############################################################################
 
 
+#########################################################
 library(corrplot)
 data.corr <- as.data.frame(sapply(df, as.numeric))
 
