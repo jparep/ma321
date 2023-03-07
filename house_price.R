@@ -68,7 +68,7 @@ df1 <- subset(df1, select = -c(Id, LowQualFinSF, PoolArea, MiscVal, MoSold))
 unique(df$OverallCond)
 #OverallCon btween 7-10 is classified as 1 (Good), btwn 4-6 is classifed as 2 (Average),
 # between 1-3 is classified as 3 (Poor) condition
-df1$OverallConClass <- with(df1, ifelse(OverallCond <=3, "3", ifelse(OverallCond <=6, "2", "1")))
+df1$OverallCond <- with(df1, ifelse(OverallCond <=3, "Poor", ifelse(OverallCond <=6, "Average", "Good")))
 
 # Factor all categorical Variables variables
 df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
@@ -100,7 +100,7 @@ unique(comppleted_imp_df$OverallCond)
 # Check for any NA after imputation?
 sapply(comppleted_imp_df, function(x) sum(is.na(x))) # good to go!
 sum(is.na(comppleted_imp_df))
-
+df0 <- comppleted_imp_df
 
 ########## CORRELATION ########################################################
 #Correlation with 
@@ -228,6 +228,55 @@ head(df3)
 
 model <- mlogit(df3$OverallConClass ~1, data = df3, reflevel = "1")
 summary(model)
+
+
+#############
+xtabs(OverallCond ~., data=df0, sparse=TRUE)
+
+xtabs(~ df0$OverallCond + df0$OverallQual, data=df0)
+
+logistic <- glm(OverallCond ~., data=df0, family="binomial")
+summary(logistic)
+
+
+####STEPWISE###
+base.mod <- glm(OverallCond ~ 1 , data= df0, family="binomial")  # base intercept only model
+all.mod <- glm(OverallCond ~ . , data= df0, family="binomial") # full model with all predictors
+
+
+############## Log Reg ##
+index <- sample(nrow(df0),nrow(df0)*0.80)
+credit_train = df0[index,]
+credit_test = df0[-index,]
+
+# train model
+nothing <- glm(OverallCond ~ 1,family="binomial", data=df0)
+
+fulMod <- glm(OverallCond~., family="binomial", data=df0)
+
+mod1 <- glm(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
+                  MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
+                  YrSold + SaleType + SalePrice, family="binomial", data=df0)
+
+# Backwards selection is the default
+sMod = step(fulMod) 
+### Fianl MOdel from step - AIC  1083.33
+stepMod <- glm(OverallCond ~ Street + YearBuilt + MasVnrArea + ExterCond + Foundation + 
+                             BsmtQual + BsmtCond + TotalBsmtSF + X1stFlrSF + X2ndFlrSF + 
+                             FullBath + BedroomAbvGr + KitchenQual + Fireplaces + GarageArea + 
+                             GarageCond + YrSold + SalePrice,  family="binomial", data=df0)
+
+
+summary(nothing) #AIC 1,562.5
+summary(fulMod) # AIC 1, 165.9
+summary(mod1)    #AIC 1, 203.9
+summary(sMod)   #AIC  1, 083.33
+summary(stepMod)#AIC  1, 083
+
+
+
+
+
 
 
 #############################################################################
