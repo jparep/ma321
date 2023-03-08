@@ -1,3 +1,4 @@
+#Assignment Mell Pull
 library("VIM")
 library("dplyr")
 library("tidyverse")
@@ -248,6 +249,29 @@ all.mod <- glm(OverallCond ~ . , data= df0, family="binomial") # full model with
 index <- sample(nrow(df0),nrow(df0)*0.80)
 credit_train = df0[index,]
 credit_test = df0[-index,]
+
+
+fullMod3 <- glm(OverallCond~., family="binomial", data=credit_train)
+
+mod3 <- glm(OverallCond ~ Condition1 + YearBuilt + Exterior1st + BsmtQual + GrLivArea +
+              Functional + GarageArea + SalePrice + SaleCondition + SaleType + PavedDrive +
+              Fireplaces + GrLivArea + TotalBsmtSF + BldgType, family="binomial", data=credit_train)
+
+
+summary(fullMod3) # AIC = 952.37.5
+summary(mod3)     # AIC = 983.53
+
+
+
+# Select all the categorical variables
+cat <- unlist(lapply(df0, is.factor))
+cat <- df0[cat]
+
+xtabs(formula = ~., data = cat, subset, sparse = FALSE,
+      na.action, addNA = FALSE, exclude = if(!addNA) c(NA, NaN),
+      drop.unused.levels = FALSE)
+
+
 
 #############################################################################
 ###  QUESTION 3: Predicting House Prices
