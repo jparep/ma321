@@ -6,7 +6,8 @@ library("corrplot")
 library("mice")
 library("ggplot2")
 library("VIM")
-
+#install.packages("DataExplorer")
+library("DataExplorer")
 
 ################################################################################
 ####  Q1: STATISTICAL Descriptive ANALYSIS
@@ -22,6 +23,12 @@ view(df)
 glimpse(df)
 str(df)
 summary(df) #Numerical summaries of the variables in the dataset
+
+###REMOVE##
+num_df <- unlist(lapply(df, is.numeric))
+num_df <- df[, num_df]
+t(summary(num_df))
+
 introduce(df) #Get more detail about row, columns and NAs
 ##check duplicate
 duplicated(df)
@@ -111,7 +118,7 @@ cor_numVar <- cor(all_numVar, use="pairwise.complete.obs") #correlations of all 
 #sort on decreasing correlations with SalePrice
 cor_sorted <- as.matrix(sort(cor_numVar[,'SalePrice'], decreasing = TRUE))
 #select only high corelations
-CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.5)))
+CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.3 | x < -0.3)))
 cor_numVar <- cor_numVar[CorHigh, CorHigh]
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 
@@ -139,18 +146,26 @@ names(select_if(df1, is.numeric))
 #install.packages("flextable")
 library(flextable) # for beautifying tables
 library(dlookr)    # for the main event of the evening
-diagnose_numeric(comppleted_imp_df) %>% 
+diagnose_numeric(df1) %>% 
   filter(minus > 0 | zero > 0) %>% 
   select(variables, median, zero:outlier) %>% 
   flextable()
 
 # Take average for the outliers to check the influence on variables
-diagnose_outlier(comppleted_imp_df) %>% flextable()
+diagnose_outlier(df1) %>% flextable()
 # Get descriptive statistics after imputed
-describe(comppleted_imp_df) %>% flextable()
+describe(df1) %>% flextable()
 
 ###Normality Test
-normality(comppleted_imp_df) %>% flextable()
+normality(df1) %>% flextable()
+
+
+###############
+# Plot of data with outliers.
+#par(mfrow=c(1, 2))
+#plot(df$GrLivArea, df$SalePrice, xlim=c(0, 6000), ylim=c(0,700000), main="With Outliers", xlab="GrLive Area", ylab="Sale Price", pch="*", col="red", cex=2)
+#abline(lm(SalePrice ~ GrLivArea, data=df), col="blue", lwd=3, lty=2)
+# Plot of original data without outliers. Note the change in slope (angle) of best fit line.
 
 # Check outliers graphically for all the numerical variables 
 # Since outliers in these numerical var contains important info, they are retained
@@ -172,7 +187,7 @@ comppleted_imp_df %>% select(MiscVal) %>%  plot_outlier()     t
 ###############################################################################
 #install.packages("DataExplorer")
 library(DataExplorer)
-plot_correlation(na.omit(df0), maxcat = 5L)
+plot_correlation(na.omit(df1), maxcat = 5L)
 
 library(corrplot)
 data.corr <- as.data.frame(sapply(df, as.numeric))
@@ -190,6 +205,98 @@ sapply(df, function(x) length(unique(x)))
 #############################################################################
 ###  QUESTION 2: Logistic Regression to Classifiy Overall House Condition
 #############################################################################
+############## Training Data ###############################
+#install.packages('caTools')
+library(caTools)
+set.seed(123)
+split <- sample.split(df0$OverallCond, SplitRatio = 0.80)
+
+#get training and test data
+train <- subset(df0, split == TRUE)
+test <- subset(df0, split == FALSE)
+
+
+############## MODEL  - FEATURE SELECTION ##############################
+# Full Model - All features selected
+full_mod1 <- multinom(OverallCond~., family="binomial", data=train)
+
+# Features selected using P-value < 0.5 from full model output
+part_mod2 <- multinom(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
+              MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
+              YrSold + SaleType + SalePrice, data=train)
+
+# Features selected from  highly correlation matrix
+corr_mod3 <- multinom(OverallCond ~ Condition1 + YearBuilt + BsmtQual + GrLivArea +
+              Functional + GarageArea + SalePrice + SaleCondition + SaleType + PavedDrive +
+              Fireplaces + GrLivArea + BldgType, data=train)
+
+# Full Step model
+FullStep_mod4 = step(full_mod1)
+
+# Features selected from Full Step Model
+selectedStep_mod5 <- multinom(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
+                   YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
+                   Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
+                   FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
+                   GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
+
+
+summary(full_mod1)        # AIC = 1135.28
+summary(part_mod2)        # AIC = 1080.597 
+summary(corr_mod3)        # AIC = 1096.734 
+summary(FullStep_mod4)    # AIC = 916.1044 
+summary(selectedStep_mod5)# AIC = 977.3645 -> use this model since few features with low AIC value
+
+######Prediction ########################
+#2-tailed z test
+z <- summary(selectedStep_mod5)$coefficients/summary(selectedStep_mod5)$standard.errors
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+p
+
+# Confution Matrix & Misclassification Error - train Data
+pre1 <- predict(selectedStep_mod5, train)
+#Confusion Matrix
+tab1 <- table(pre1, train$OverallCond)
+tab1
+
+# Accuracy test on Training Dataset
+sum(diag(tab1))/sum(tab1) # 83.3% classification accuracy based on testing data
+1 - sum(diag(tab1))/sum(tab1) #16.7% overall miss classification
+
+# Confution Matrix & Misclassification Error - Test Data
+pre2 <- predict(selectedStep_mod5, test)
+tab2 <- table(pre2, test$OverallCond)
+tab2
+
+#Accuracy test on Testing Dataset
+sum(diag(tab2))/sum(tab2) # 80.1% classification accuracy based on testing data
+1 - sum(diag(tab2))/sum(tab2) #19.9% overall miss classification
+
+# Prediction and Model Assessment
+# Accuracy & Sensitivity for Testing Data
+n1 <-table(train$OverallCond)
+n
+n1/sum(n)
+tab1/colSums(tab1) #Average classification accuraccy is performing better than Poor and better relatively
+
+# Accuracy & Sensitivity for Testing Data
+n2 <-table(test$OverallCond)
+n2
+n2/sum(n2)
+tab2/colSums(tab2) #Average classification accuraccy is performing better than Poor and better relatively
+
+
+
+
+#############################################################################
+###  QUESTION 3: Predicting House Prices
+#############################################################################
+
+#SCALE Numerical variables 
+df_scaled <- num_df %>% mutate_if(is.numeric, scale)
+t(summary(df_scaled))
+dfCom <- cbind(cat_df, df_scaled)
+
 
 ###### SELECT NUMERICAL VARIABLES ########
 num_df <- unlist(lapply(comppleted_imp_df, is.numeric))
@@ -205,154 +312,6 @@ str(cat_df)
 
 # TO DO - NEED TO SELECT FEATURES FIRST
 count(comppleted_imp_df, OverallCond) #Check the classification distribution
-
-
-############## Training Data ###############################
-
-###### Train 1 #####
-set.seed(1)
-index <- sample(nrow(df0),nrow(df0)*0.80)
-train = df0[index,]
-test = df0[-index,]
-
-## Train 2 #####
-#install.packages("caTools")
-library(caTools)
-set.seed(12)
-split <- sample.split(OverallCond, SplitRatio = 0.8)
-train <- subset(df0, split == T)
-test <- subset(df0, split == F)
-# check output Class distributiion
-table(test$OverallCon)
-pre <- predict(mod3, newdata=train, type = "response",)
-#table(test$OverallCond, pre > 0.5)
-y_pred_num <- ifelse(pre > 0.5, 1, 0)
-y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$OverallCond
-table(train$OverallCond, pre > 0.5)
-
-########### TRain 3 #####################
-#install.packages("caret")
-library(caret)
-'%ni%' <- Negate('%in%')  # define 'not in' func
-options(scipen=1)  # prevents printing scientific notations.
-set.seed(100)
-split <- createDataPartition(df0$OverallCond, p=0.8, list = F)
-train <- df0[split, ]
-test <- df0[-split, ]
-
-# Class distribution of train data
-table(train$OverallCond)
-
-# Down Sample
-set.seed(100)
-down_train <- downSample(x = train[, colnames(train) %ni% "OverallCon"],
-                         y = train$OverallCond)
-table(down_train$OverallCond)
-
-# Up Sample (optional)
-set.seed(100)
-up_train <- upSample(x = train[, colnames(train) %ni% "OverallCon"],
-                     y = train$OverallCond)
-
-table(up_train$OverallCond)
-
-
-
-############## FEATURE SELECTION ##############################
-# FEATURE SELECTION - for Overall Condition rating classification
-fullMod1 <- glm(OverallCond~., family="binomial", data=train)
-
-mod1 <- glm(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
-              MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
-              YrSold + SaleType + SalePrice, family="binomial", data=df0)
-
-# Backwards selection is the default
-step1 = step(fullMod1) 
-### Fianl MOdel from step - AIC  1083.33
-stepMod1 <- glm(OverallCond ~ Street + YearBuilt + MasVnrArea + ExterCond + Foundation + 
-                  BsmtQual + BsmtCond + TotalBsmtSF + X1stFlrSF + X2ndFlrSF + 
-                  FullBath + BedroomAbvGr + KitchenQual + Fireplaces + GarageArea + 
-                  GarageCond + YrSold + SalePrice,  family="binomial", data=df0)
-
-
-mod2 <- glm(OverallCond ~ Condition1 + YearBuilt + BsmtQual + GrLivArea +
-              Functional + GarageArea + SalePrice + SaleCondition + SaleType + PavedDrive +
-              Fireplaces + GrLivArea + BldgType, family="binomial", data=train)
-
-# Select model with stepAIC
-library("MASS")
-stepAIC <- stepAIC(fullMod1)
-
-mod3 <- glm(OverallCond ~ YearBuilt + Foundation + BsmtQual + TotalBsmtSF + BsmtCond + BsmtQual + X1stFlrSF +
-              X2ndFlrSF + FullBath + BedroomAbvGr + KitchenQual + Fireplaces + YrSold + SalePrice,family="binomial", data=train )
-
-# Build Logistic Model
-#logitmod <- glm(Class ~ Cl.thickness + Cell.size + Cell.shape, family = "binomial", data=down_train)
-logitmod <- glm(OverallCond ~  Condition1 + YearBuilt + BsmtQual + GrLivArea +
-                  Functional + GarageArea + SalePrice + SaleCondition + SaleType + PavedDrive +
-                  Fireplaces + BldgType, family="binomial", data=down_train)
-
-pred <- predict(logitmod, newdata = test, type = "response")
-# Recode factors
-y_pred_num <- ifelse(pred > 0.5, 1, 0)
-y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- testData$OverallCond
-table(pred)
-# Accuracy
-mean(y_pred == y_act)  # 94%
-
-pred <- predict(logitmod, newdata = testData, type = "response")
-
-summary(fullMod1) # AIC 1,165.9
-summary(step)   #AIC  1,083.33
-summary(stepMod)#AIC  1,083.33
-summary(mod1)    #AIC 1,203.9
-summary(mod2)     # AIC = 963.84.62 (removed TotRmsAbvGrd correlated to GrLivArea)
-summary(stepAIC) #AIC = 1083.3
-summary(mod3) # AIC=1083.33
-summary(logitmod) #AIC 94.594
-
-
-######Prediction #######
-#install.packages('caTools')
-library(caTools)
-set.seed(88)
-split <- sample.split(df0$OverallCond, SplitRatio = 0.80)
-
-#get training and test data
-dresstrain <- subset(df0, split == TRUE)
-dresstest <- subset(df0, split == FALSE)
-
-summary(logitmod)
-predict <- predict(logitmod, type = 'response')
-#confusion matrix
-table(dresstrain$OverallCond, predict > 0.5)
-
-#ROCR Curve
-#install.packages("ROCR")
-library(ROCR)
-data(ROCR.simple)
-ROCRpred <- prediction(ROCR.simple$predictions, ROCR.simple$labels)
-
-#library(ROCR)
-#ROCRpred <- prediction(predict, dresstrain$OverallCond)
-ROCRperf <- performance(ROCRpred, 'tpr','fpr')
-plot(ROCRperf, colorize = TRUE, text.adj = c(-0.2,1.7))
-
-
-
-
-#############################################################################
-###  QUESTION 3: Predicting House Prices
-#############################################################################
-
-#SCALE Numerical variables 
-df_scaled <- df0 %>% mutate_if(is.numeric, scale)
-summary(df_scaled)
-dfCom <- cbind(cat_df, df_scaled)
-
-
 
 #############################################################################
 ###  QUESTION 4: Research Question in Relation to House Data
