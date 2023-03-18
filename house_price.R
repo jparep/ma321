@@ -218,6 +218,7 @@ test <- subset(df0, split == FALSE)
 
 ############## MODEL  - FEATURE SELECTION ##############################
 # Full Model - All features selected
+library(nnet)
 full_mod1 <- multinom(OverallCond~., family="binomial", data=train)
 
 # Features selected using P-value < 0.5 from full model output
@@ -254,19 +255,21 @@ p <- (1 - pnorm(abs(z), 0, 1)) * 2
 p
 
 # Confution Matrix & Misclassification Error - train Data
-pre1 <- predict(selectedStep_mod5, train)
+pred1 <- predict(selectedStep_mod5, train)
 #Confusion Matrix
-tab1 <- table(pre1, train$OverallCond)
-tab1
+library(caret)
+tab1 <- table(pred1, train$OverallCond)
+confusionMatrix(tab1)
 
 # Accuracy test on Training Dataset
 sum(diag(tab1))/sum(tab1) # 83.3% classification accuracy based on testing data
 1 - sum(diag(tab1))/sum(tab1) #16.7% overall miss classification
 
 # Confution Matrix & Misclassification Error - Test Data
-pre2 <- predict(selectedStep_mod5, test)
-tab2 <- table(pre2, test$OverallCond)
-tab2
+pred2 <- predict(selectedStep_mod5, test)
+#Confusion Matrix
+tab2 <- table(pred2, test$OverallCond)
+confusionMatrix(tab2)
 
 #Accuracy test on Testing Dataset
 sum(diag(tab2))/sum(tab2) # 80.1% classification accuracy based on testing data
