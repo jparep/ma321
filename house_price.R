@@ -1,4 +1,3 @@
-#Assignment Mell Pull
 library("VIM")
 library("dplyr")
 library("tidyverse")
@@ -6,8 +5,8 @@ library("corrplot")
 library("mice")
 library("ggplot2")
 library("VIM")
-#install.packages("DataExplorer")
 library("DataExplorer")
+library("dlookr")
 
 ################################################################################
 ####  Q1: STATISTICAL Descriptive ANALYSIS
@@ -62,18 +61,16 @@ aggr_plot <- aggr(df, col=c('navyblue','red'),
                   ylab=c("Histogram of Missing data","Pattern"))
 
 
-############## FACTOR VARIABLEs - BOTHE CAT & NUM ##########################################
-#comppleted_imp_df[] <- lapply(comppleted_imp_df, factor)
-#factor_df <- comppleted_imp_df
+############## Removing variables with NA > 80%  ##########################################
 
-#############################################################
-#Group houses based on Overall condition
 # Drop variables with 80% missing data (4 variables here have NA > 80%)
 df1 <- subset(df, select = -c(PoolQC, MiscFeature, Alley, Fence))
 # Also, deselecting irrelevant variables
 df1 <- subset(df1, select = -c(Id, LowQualFinSF, PoolArea, MiscVal, MoSold))
 
 unique(df$OverallCond)
+
+#Group houses based on Overall condition
 #OverallCon btween 7-10 is classified as 1 (Good), btwn 4-6 is classifed as 2 (Average),
 # between 1-3 is classified as 3 (Poor) condition
 df1$OverallCond <- with(df1, ifelse(OverallCond <=3, "Poor", ifelse(OverallCond <=6, "Average", "Good")))
@@ -81,20 +78,6 @@ df1$OverallCond <- with(df1, ifelse(OverallCond <=3, "Poor", ifelse(OverallCond 
 # Factor all categorical Variables variables
 df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
 
-# Subset numerical variables that require factoring (9 num variabels require factoring here)
-#num_fac <-  c("OverallQual", "FullBath", "BedroomAbvGr",
-#                     "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces")
-#
-# Factor numerical variables
-#sub_df[num_fac] <- lapply(sub_df[num_fac], factor)
-
-# Select all the categorical variables
-#cat_df <- unlist(lapply(sub_df, is.factor))
-#cat_df <- sub_df[cat_df]
-
-num_df <- unlist(lapply(sub_df, is.numeric))
-num_df <- sub_df[num_df]
-##############################################################################
 ################ HANDLING NAs - IMPUTAE REMAINING MISSING VALUES ##############
 #impute NAs - In this case, the random forest mice function is used. Random m set to 5
 imp_df <- mice(df1, seed = 123, m=5, method = "rf")
@@ -136,10 +119,8 @@ ggcorrplot(r,
            type = "lower",
            lab = TRUE)
 
-#############################################################################
-############################################
-##### CHECKING AND HANDLING OUTLIERS #######
-############################################
+
+##### OUTLIERS  ####################
 length(select_if(df1, is.numeric)) # 14 numberical variables
 names(select_if(df1, is.numeric))
 
@@ -156,35 +137,31 @@ diagnose_outlier(df1) %>% flextable()
 # Get descriptive statistics after imputed
 describe(df1) %>% flextable()
 
-###Normality Test
-normality(df1) %>% flextable()
-
-
-###############
-# Plot of data with outliers.
-#par(mfrow=c(1, 2))
-#plot(df$GrLivArea, df$SalePrice, xlim=c(0, 6000), ylim=c(0,700000), main="With Outliers", xlab="GrLive Area", ylab="Sale Price", pch="*", col="red", cex=2)
-#abline(lm(SalePrice ~ GrLivArea, data=df), col="blue", lwd=3, lty=2)
+# Plot data with outliers.
+par(mfrow=c(1, 2))
+plot(df$GrLivArea, df$SalePrice, xlim=c(0, 6000), ylim=c(0,700000), main="With Outliers", xlab="GrLive Area", ylab="Sale Price", pch="*", col="red", cex=2)
+abline(lm(SalePrice ~ GrLivArea, data=df), col="blue", lwd=3, lty=2)
 # Plot of original data without outliers. Note the change in slope (angle) of best fit line.
 
 # Check outliers graphically for all the numerical variables 
 # Since outliers in these numerical var contains important info, they are retained
-comppleted_imp_df %>% select(SalePrice) %>%  plot_outlier()   
-comppleted_imp_df %>% select(LotFrontage) %>%  plot_outlier() 
-comppleted_imp_df %>% select(LotArea) %>%  plot_outlier()     
-comppleted_imp_df %>% select(YearBuilt) %>%  plot_outlier()   
-comppleted_imp_df %>% select(MasVnrArea) %>%  plot_outlier()
-comppleted_imp_df %>% select(TotalBsmtSF) %>%  plot_outlier() 
-comppleted_imp_df %>% select(X2ndFlrSF) %>%  plot_outlier()   
-comppleted_imp_df %>% select(LowQualFinSF) %>%  plot_outlier()
-comppleted_imp_df %>% select(GrLivArea) %>%  plot_outlier()   
-comppleted_imp_df %>% select(GarageArea) %>%  plot_outlier()
-comppleted_imp_df %>% select(PoolArea) %>%  plot_outlier()    
-comppleted_imp_df %>% select(MiscVal) %>%  plot_outlier()     t
+df0 %>% select(SalePrice) %>%  plot_outlier()   
+df0 %>% select(LotFrontage) %>%  plot_outlier() 
+df0 %>% select(LotArea) %>%  plot_outlier()     
+df0 %>% select(YearBuilt) %>%  plot_outlier()   
+df0 %>% select(MasVnrArea) %>%  plot_outlier()
+df0 %>% select(TotalBsmtSF) %>%  plot_outlier() 
+df0 %>% select(X2ndFlrSF) %>%  plot_outlier()   
+df0 %>% select(LowQualFinSF) %>%  plot_outlier()
+df0 %>% select(GrLivArea) %>%  plot_outlier()   
+df0 %>% select(GarageArea) %>%  plot_outlier()
+df0 %>% select(PoolArea) %>%  plot_outlier()    
+df0 %>% select(MiscVal) %>%  plot_outlier() 
 
-###############################################################################
-######  COLLINEARITy #
-###############################################################################
+###Normality Test
+normality(df1) %>% flextable()
+
+######  COLLINEARITy #############################
 #install.packages("DataExplorer")
 library(DataExplorer)
 plot_correlation(na.omit(df1), maxcat = 5L)
@@ -198,9 +175,7 @@ corr.price = as.matrix(sort(correlations[,'SalePrice'], decreasing = TRUE))
 corr.id = names(which(apply(corr.price, 1, function(x) (x > 0.05 | x < -0.50))))
 corrplot(as.matrix(correlations[corr.id,corr.id]), type = 'upper', method='color', addCoef.col = 'black', tl.cex = 1,cl.cex = 1, number.cex=1)
 
-
 sapply(df, function(x) length(unique(x)))
-
 
 #############################################################################
 ###  QUESTION 2: Logistic Regression to Classifiy Overall House Condition
@@ -214,7 +189,6 @@ split <- sample.split(df0$OverallCond, SplitRatio = 0.80)
 #get training and test data
 train <- subset(df0, split == TRUE)
 test <- subset(df0, split == FALSE)
-
 
 ############## MODEL  - FEATURE SELECTION ##############################
 # Full Model - All features selected
