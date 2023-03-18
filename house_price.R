@@ -312,6 +312,80 @@ str(cat_df)
 
 # TO DO - NEED TO SELECT FEATURES FIRST
 count(comppleted_imp_df, OverallCond) #Check the classification distribution
+       
+##Models:
+no_id_df <- df0[,-c(1)]
+indeces <- sample(nrow(no_id_df), 0.8*nrow(no_id_df))
+indeces
+length(indeces)
+
+train =no_id_df[indeces,]
+test = no_id_df[-indeces,]
+dim(train)
+dim(test)
+
+
+#Random forest
+require(randomForest)
+#install.packages('randomForest')
+library(randomForest)
+library(ipred)
+
+forest.df <- randomForest(SalePrice ~ ., data=train)
+forest.df
+plot(forest.df)
+
+pred<-predict(forest.df, newdata=test)
+
+errorest(SalePrice ~ ., data=test, model=randomForest,
+         estimator = "cv", predict = pred)
+
+plot(x=pred, y=test[,50],
+     xlab='Predicted Values',
+     ylab='Actual Values', col='blue',
+     main='Predicted vs. Actual Values')
+
+#abline(a=0,b=1, col='red')
+#abline shows a 'perfect' gradient
+
+#SVM 
+library(e1071)
+#new df with high correlation to sale price
+high_corr_df <- no_id_df[,c(12,29,38,24,26,30,34,14,50)]
+names(high_corr_df)
+
+#removing 'X1stFlrSF' as it is highly correlated with 'TotalBsmntSF'
+#removing 'GrLivArea' as it is highly correlated with 'TotRmsAbvGrd'
+new_df <- high_corr_df[,-c(2,5)]
+names(new_df)
+
+indeces = sample(nrow(new_df), 0.8*nrow(new_df))
+indeces
+length(indeces)
+
+training=new_df[indeces,]
+testing= new_df[-indeces,]
+dim(training)
+dim(testing)
+
+SVM_model<- svm(SalePrice~., data=training)
+print(SVM_model)
+
+svm_pred <- predict(SVM_model, testing)
+str(training)
+str(testing)
+
+sapply(lapply(testing, unique), length)
+
+x <- 1:length(test$SalePrice)
+
+plot(x, testing$SalePrice, pch=18, col="red")
+lines(x, svm_pred, lwd="1", col="blue")
+
+errorest(SalePrice ~ ., data=testing, model=svm,
+         estimator = "cv", predict = svm_pred)
+
+
 
 #############################################################################
 ###  QUESTION 4: Research Question in Relation to House Data
