@@ -4,9 +4,13 @@ library("tidyverse")
 library("corrplot")
 library("mice")
 library("ggplot2")
+library("ggcorrplot")
 library("VIM")
 library("DataExplorer")
 library("dlookr")
+library("flextable")
+library('caTools')
+library("caret")
 
 ################################################################################
 ####  Q1: STATISTICAL Descriptive ANALYSIS
@@ -23,7 +27,7 @@ glimpse(df)
 str(df)
 summary(df) #Numerical summaries of the variables in the dataset
 
-###REMOVE##
+# Statistical description in transpose form
 num_df <- unlist(lapply(df, is.numeric))
 num_df <- df[, num_df]
 t(summary(num_df))
@@ -62,7 +66,6 @@ aggr_plot <- aggr(df, col=c('navyblue','red'),
 
 
 ############## Removing variables with NA > 80%  ##########################################
-
 # Drop variables with 80% missing data (4 variables here have NA > 80%)
 df1 <- subset(df, select = -c(PoolQC, MiscFeature, Alley, Fence))
 # Also, deselecting irrelevant variables
@@ -109,9 +112,7 @@ corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 # calulate the correlations in numerical variables
 r <- cor(num_df, use="complete.obs")
 round(r,2)
-library(ggplot2)
-install.packages("ggcorrplot")
-library("ggcorrplot")
+
 ggcorrplot(r)
 
 ggcorrplot(r, 
@@ -124,9 +125,6 @@ ggcorrplot(r,
 length(select_if(df1, is.numeric)) # 14 numberical variables
 names(select_if(df1, is.numeric))
 
-#install.packages("flextable")
-library(flextable) # for beautifying tables
-library(dlookr)    # for the main event of the evening
 diagnose_numeric(df1) %>% 
   filter(minus > 0 | zero > 0) %>% 
   select(variables, median, zero:outlier) %>% 
@@ -162,8 +160,6 @@ df0 %>% select(MiscVal) %>%  plot_outlier()
 normality(df1) %>% flextable()
 
 ######  COLLINEARITy #############################
-#install.packages("DataExplorer")
-library(DataExplorer)
 plot_correlation(na.omit(df1), maxcat = 5L)
 
 library(corrplot)
@@ -181,8 +177,6 @@ sapply(df, function(x) length(unique(x)))
 ###  QUESTION 2: Logistic Regression to Classifiy Overall House Condition
 #############################################################################
 ############## Training Data ###############################
-#install.packages('caTools')
-library(caTools)
 set.seed(123)
 split <- sample.split(df0$OverallCond, SplitRatio = 0.80)
 
@@ -231,7 +225,6 @@ p
 # Confution Matrix & Misclassification Error - train Data
 pred1 <- predict(selectedStep_mod5, train)
 #Confusion Matrix
-library(caret)
 tab1 <- table(pred1, train$OverallCond)
 confusionMatrix(tab1)
 
@@ -261,8 +254,6 @@ n2 <-table(test$OverallCond)
 n2
 n2/sum(n2)
 tab2/colSums(tab2) #Average classification accuraccy is performing better than Poor and better relatively
-
-
 
 
 #############################################################################
