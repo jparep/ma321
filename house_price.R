@@ -436,9 +436,9 @@ sapply(lapply(num_df, unique), length)
 #finding which numeric variables affect sales price the most
 corr_num_vars <- cor(num_df, use="pairwise.complete.obs")
 #sort df based on correlation of variables with SalePrice
-ordered_df <- as.matrix(sort(num_df[,'SalePrice'], decreasing = T))
+ordered_df <- as.matrix(sort(corr_num_vars[,'SalePrice'], decreasing = T))
 #selecting variables with a high correlation(>0.5) to sale price
-High_corr <- names(which(apply(sorted_corr, 1, function(x) abs(x)>0.5)))
+High_corr <- names(which(apply(ordered_df, 1, function(x) abs(x)>0.5)))
 corr_num_vars<- corr_num_vars[High_corr, High_corr]
 corrplot.mixed(corr_num_vars, tl.col="black", tl.pos = "lt")
 
