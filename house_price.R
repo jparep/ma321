@@ -479,9 +479,9 @@ errorest(logSalePrice ~ ., data=testing, model=svm,
 ###  QUESTION 4: Research Question in Relation to House Data
 #############################################################################
 #Correlation with the target variable
-numericVars <- which(sapply(data, is.numeric)) #index vector numeric variables
+numericVars <- which(sapply(df0, is.numeric)) #index vector numeric variables
 numericVarNames <- names(numericVars) #saving names vector for use later on
-all_numVar <- data[, numericVars]
+all_numVar <- df0[, numericVars]
 all_numVar <- all_numVar[, -22]
 cor_numVar <- cor(all_numVar, use="pairwise.complete.obs") #correlations of all numeric variables
 #sort on decreasing correlations with OverallQual
@@ -491,7 +491,7 @@ CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.3| x< -0.3)))
 cor_numVar <- cor_numVar[CorHigh, CorHigh]
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 # Use the caTools package to create random indices for the training and testing sets
-attach(data)
+attach(df0)
 Q3 <- data.frame(OverallQual,GrLivArea,YearBuilt,GarageArea,
                  FullBath,TotalBsmtSF,MasVnrArea, Fireplaces)
 set.seed(123)
@@ -511,7 +511,7 @@ pca_model <- prcomp(predict(preproc, train_data), scale = TRUE)
 biplot(pca_model)
 # !Identify outliers
 outliers <- which(pca_model$x[,1] > 2.5 | pca_model$x[,1] < -2.5)
-text(pca_model$x[outliers,1], pca_model$x[outliers,2], labels = rownames(data)[outliers], col = "red", cex = 0.8)
+text(pca_model$x[outliers,1], pca_model$x[outliers,2], labels = rownames(df0)[outliers], col = "red", cex = 0.8)
 
 # !Check the sign and magnitude of the loadings
 pca_model$rotation[,1:3]
