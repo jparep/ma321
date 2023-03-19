@@ -432,6 +432,14 @@ x <- 1:length(testing$logSalePrice)
 plot(x, testing$logSalePrice, pch=18, col='red')
 lines(x, svm_pred, col ='blue')
 
+plot(x=svm_pred, y=test[,51],
+     xlab='Predicted Values',
+     ylab='Actual Values', col='blue',
+     main='A comparison of the actual sale price and those predicted using the support vector regression model')
+
+#abline shows a 'perfect' gradient
+abline(a=0,b=1, col='red')                   
+                               
 #10-fold cross validation
 errorest(logSalePrice ~ ., data=testing, model=svm,
          estimator = 'cv', predict = svm_pred)
