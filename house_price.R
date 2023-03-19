@@ -149,26 +149,27 @@ df_transform =subset(df_transform, select = -c(Alley, Utilities, LotConfig, Neig
                     BldgType, HouseStyle, RoofStyle, RoofMatl, Exterior1st, Foundation, Heating, Functional, 
                     GarageType, GarageCond, PavedDrive, Fence, MiscFeature, SaleType, SaleCondition))#remove original variables that have been transformed
 df_transform # display the merged data frame
-#Ordinal categorical variables: 
+                             
+#categorical variables to Ordinal  
 unique(df_transform$ExterQual)
 df_transform$ExterQual <- factor(df_transform$ExterQual, levels = c("Ex","Gd","TA","Fa"), ordered = TRUE)
-df_transform$ExterQual_num <- as.numeric(df_transform$ExterQual)
+df_transform$ExterQual_num <- as.numeric(df_transform$ExterQual)#transforming categorical variable to ordinal to follow a specific order 
 
 unique(df_transform$ExterCond)
 df_transform$ExterCond <- factor(df_transform$ExterCond, levels = c("Ex","Gd","TA","Fa","Po"), ordered = TRUE)
-df_transform$ExterCond_num <- as.numeric(df_transform$ExterCond)
+df_transform$ExterCond_num <- as.numeric(df_transform$ExterCond)#transforming categorical variable to ordinal to follow a specific order 
 
 unique(df_transform$BsmtQual)
 df_transform$BsmtQual<- factor(df_transform$BsmtQual, levels = c("Ex","Gd","TA","Fa","Po","no"), ordered = TRUE)
-df_transform$BsmtQual_num <- as.numeric(df_transform$BsmtQual)
+df_transform$BsmtQual_num <- as.numeric(df_transform$BsmtQual)#transforming categorical variable to ordinal to follow a specific order 
 
 unique(df_transform$BsmtCond)
 df_transform$BsmtCond<- factor(df_transform$BsmtCond, levels = c("Gd","TA","Fa","Po","no"), ordered = TRUE)
-df_transform$BsmtCond_num <- as.numeric(df_transform$BsmtCond)
+df_transform$BsmtCond_num <- as.numeric(df_transform$BsmtCond)#transforming categorical variable to ordinal to follow a specific order 
 
 unique(df_transform$KitchenQual)
 df_transform$KitchenQual<- factor(df_transform$KitchenQual, levels = c("Ex","Gd","TA","Fa"), ordered = TRUE)
-df_transform$KitchenQual_num <- as.numeric(df_transform$KitchenQual)
+df_transform$KitchenQual_num <- as.numeric(df_transform$KitchenQual)#transforming categorical variable to ordinal to follow a specific order 
 
 unique(df_transform$PoolQC)
 df_transform$PoolQC<- factor(df_transform$PoolQC, levels = c("Ex","Gd","Fa","no"), ordered = TRUE)
