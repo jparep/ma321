@@ -101,10 +101,6 @@ unique(df0$OverallCond)
 # Check for any NA after imputation?
 sapply(df0, function(x) sum(is.na(x))) # good to go!
 sum(is.na(df0))
-
-# Factor all categorical Variables variables
-df1<- data.frame(df)    
-df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
        
 #Testing for normality
 # Select all the numerical variables
@@ -126,16 +122,6 @@ print(p_values)
 boxplot(numerical[1:6])
 boxplot(numerical[7:13])
 boxplot(numerical[14:22])
-
-#Categorical data
-# Select all the categorical variables
-categorical <- subset(df1, select = -c(LotFrontage,LotArea,OverallQual,OverallCond,YearBuilt,
-                                                MasVnrArea,TotalBsmtSF,X1stFlrSF,X2ndFlrSF,LowQualFinSF,
-                                                GrLivArea,FullBath,BedroomAbvGr,KitchenAbvGr,TotRmsAbvGrd,
-                                                Fireplaces,GarageArea,PoolArea,MiscVal,MoSold,YrSold, SalePrice))
-categorical
-names(categorical)
-dim(categorical)
 
 #Correlation with sales 
 numericVars <- which(sapply(df, is.numeric)) #index vector numeric variables
@@ -433,7 +419,7 @@ corr_num_vars <- cor(num_df, use="pairwise.complete.obs")
 #sort df based on correlation of variables with SalePrice
 ordered_df <- as.matrix(sort(num_df[,'SalePrice'], decreasing = T))
 #selecting variables with a high correlation(>0.5) to sale price
-High_corr <- names(which(apply(ordered_df, 1, function(x) abs(x)>0.5)))
+High_corr <- names(which(apply(sorted_corr, 1, function(x) abs(x)>0.5)))
 corr_num_vars<- corr_num_vars[High_corr, High_corr]
 corrplot.mixed(corr_num_vars, tl.col="black", tl.pos = "lt")
 
