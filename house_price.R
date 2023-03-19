@@ -13,6 +13,9 @@ library('caTools')
 library("caret")
 library("nnet")
 library("e1071") #for SVM model
+library(ipred)
+library(randomForest)
+
 
 ################################################################################
 ####  Q1: STATISTICAL Descriptive ANALYSIS
@@ -325,8 +328,34 @@ str(cat_df)
 # TO DO - NEED TO SELECT FEATURES FIRST
 count(comppleted_imp_df, OverallCond) #Check the classification distribution
        
-##Models:
-no_id_df <- df0[,-c(1)]
+set.seed(123)
+
+summary(df0)
+#box plot showing SalePrice
+boxplot(df0$SalePrice, horizontal = T, xlab= 'Sale Price', main = 'A boxplot depicting the sale price of properties in the data frame')
+
+#dealing with outliers
+Lower_quartile <- quantile(df0$SalePrice, .25)
+Upper_quartile <- quantile(df0$SalePrice, .75)
+iqr <- IQR(df0$SalePrice)
+
+Lower_quartile
+Upper_quartile
+iqr
+
+no_outliers_df <- subset(df0, df0$SalePrice > (Lower_quartile - 1.5*iqr) & df0$SalePrice < (Upper_quartile + 1.5*iqr))
+dim(no_outliers_df)
+
+
+#finding the log of saleprice to help reduce skew. Also helps lower value when calculating the test error
+no_outliers_df$logSalePrice<-log(no_outliers_df$SalePrice)
+head(no_outliers_df)
+
+#removing the id column from the data frame
+no_id_df <- no_outliers_df[,-c(1)]
+
+
+#splitting data frame into training and testing set
 indeces <- sample(nrow(no_id_df), 0.8*nrow(no_id_df))
 indeces
 length(indeces)
@@ -343,34 +372,62 @@ require(randomForest)
 library(randomForest)
 library(ipred)
 
-forest.df <- randomForest(SalePrice ~ ., data=train)
+forest.df <- randomForest(logSalePrice ~ ., data=train)
 forest.df
 plot(forest.df)
 
 pred<-predict(forest.df, newdata=test)
 
-errorest(SalePrice ~ ., data=test, model=randomForest,
-         estimator = "cv", predict = pred)
-
-plot(x=pred, y=test[,50],
+plot(x=pred, y=test[,51],
      xlab='Predicted Values',
      ylab='Actual Values', col='blue',
-     main='Predicted vs. Actual Values')
+     main='A comparison of the actual sale price and those predicted using the random forest model')
 
-#abline(a=0,b=1, col='red')
 #abline shows a 'perfect' gradient
+abline(a=0,b=1, col='red')
 
-#SVM 
-library(e1071)
-#new df with high correlation to sale price
-high_corr_df <- no_id_df[,c(12,29,38,24,26,30,34,14,50)]
-names(high_corr_df)
+
+#10-fold cross-validation estimator
+errorest(logSalePrice ~ ., data=test, model=randomForest,
+         estimator = "cv", predict = pred)
+
+
+#bootstrap estimator
+errorest(logSalePrice ~ ., data=test, model=randomForest,
+         estimator = "boot", predict = pred)
+
+
+#SVM
+#getting the numerical values from df0
+numerical_df_indeces <- which(sapply(no_id_df, is.numeric)) #index vector numeric variables
+num_df <- no_id_df[, numerical_df_indeces]
+head(num_df)
+dim(num_df)
+
+#viewing the number of unique values in each variable
+sapply(lapply(num_df, unique), length)
+
+
+#finding which numeric variables affect sales price the most
+corr_num_vars <- cor(num_df, use="pairwise.complete.obs")
+#sort df based on correlation of variables with SalePrice
+ordered_df <- as.matrix(sort(num_df[,'SalePrice'], decreasing = T))
+#selecting variables with a high correlation(>0.5) to sale price
+High_corr <- names(which(apply(sorted_corr, 1, function(x) abs(x)>0.5)))
+corr_num_vars<- corr_num_vars[High_corr, High_corr]
+corrplot.mixed(corr_num_vars, tl.col="black", tl.pos = "lt")
+
+#only using variables that have a strong correlation with the sale price
+names(num_df)
+new_df<- num_df[,c(3,11,17,7,8,12,15,5,22,23)] 
+names(new_df)
 
 #removing 'X1stFlrSF' as it is highly correlated with 'TotalBsmntSF'
 #removing 'GrLivArea' as it is highly correlated with 'TotRmsAbvGrd'
-new_df <- high_corr_df[,-c(2,5)]
+new_df <- new_df[,-c(2,5)]
 names(new_df)
 
+#separate df into training and testing data
 indeces = sample(nrow(new_df), 0.8*nrow(new_df))
 indeces
 length(indeces)
@@ -380,22 +437,28 @@ testing= new_df[-indeces,]
 dim(training)
 dim(testing)
 
-SVM_model<- svm(SalePrice~., data=training)
-print(SVM_model)
+#viewing the number of unique variables in the separated data sets
+sapply(lapply(training, unique), length)
+sapply(lapply(testing, unique), length)
 
-svm_pred <- predict(SVM_model, testing)
+SVM_model<- svm(logSalePrice~., data=training,kernel='linear' )
+print(SVM_model)
 str(training)
 str(testing)
 
-sapply(lapply(testing, unique), length)
 
-x <- 1:length(test$SalePrice)
+svm_pred <- predict(SVM_model, testing)
 
-plot(x, testing$SalePrice, pch=18, col="red")
-lines(x, svm_pred, lwd="1", col="blue")
+x <- 1:length(testing$logSalePrice)
+plot(x, testing$logSalePrice, pch=18, col='red')
+lines(x, svm_pred, col ='blue')
 
-errorest(SalePrice ~ ., data=testing, model=svm,
-         estimator = "cv", predict = svm_pred)
+#10-fold cross validation
+errorest(logSalePrice ~ ., data=testing, model=svm,
+         estimator = 'cv', predict = svm_pred)
+#bootstrap
+errorest(logSalePrice ~ ., data=testing, model=svm,
+         estimator = 'boot', predict = svm_pred)
 
 
 
