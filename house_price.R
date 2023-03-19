@@ -178,19 +178,17 @@ sapply(df, function(x) length(unique(x)))
 ###  QUESTION 2: Logistic Regression to Classifiy Overall House Condition
 #############################################################################
 ############## Training Data ###############################
-set.seed(123)
-split <- sample.split(df0$OverallCond, SplitRatio = 0.80)
-
-#get training and test data
-train <- subset(df0, split == TRUE)
-test <- subset(df0, split == FALSE)
+set.seed(123) #set seed
+split <- sample.split(df0$OverallCond, SplitRatio = 0.80) #Plit dataset
+train <- subset(df0, split == TRUE) #Training dataset
+test <- subset(df0, split == FALSE) # Testing dataset
 
 ############## MODEL  - FEATURE SELECTION ##############################
 # Full Model - All features selected
 full_mod1 <- multinom(OverallCond~., family="binomial", data=train)
 
 # Features selected using P-value < 0.5 from full model output
-part_mod2 <- multinom(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
+reduced_mod2 <- multinom(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
               MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
               YrSold + SaleType + SalePrice, data=train)
 
@@ -200,49 +198,49 @@ corr_mod3 <- multinom(OverallCond ~ Condition1 + YearBuilt + BsmtQual + GrLivAre
               Fireplaces + GrLivArea + BldgType, data=train)
 
 # Full Step model
-FullStep_mod4 = step(full_mod1)
+step = step(full_mod1)
 
 # Features selected from Full Step Model
-step_mod5 <- multinom(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
+step_mod4 <- multinom(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
                    YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
                    Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
                    FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
                    GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
 
 
-summary(full_mod1)        # AIC = 1135.28 
-summary(part_mod2)        # AIC = 1080.597 
-summary(corr_mod3)        # AIC = 1096.734 
-summary(step_mod5)# AIC = 977.3645  use this model since few features with low AIC value
+summary(full_mod1)        # AIC = 1135.28  
+summary(reduced_mod2)        # AIC = 1080.597  
+summary(corr_mod3)        # AIC = 1096.734  
+summary(step_mod4)# AIC = 977.3645  use this model since few features with low AIC value
 
 ######Prediction ########################
 #2-tailed z test
-z <- summary(step_mod5)$coefficients/summary(step_mod5)$standard.errors
+z <- summary(step_mod4)$coefficients/summary(step_mod4)$standard.errors
 p <- (1 - pnorm(abs(z), 0, 1)) * 2
 p
 
 ################################################
 # Logistic Regression Prediction -> TEST DATASET
-pred1_train <- predict(step_mod5, train)
+pred1_train <- predict(step_mod4, train)
 #Confusion Matrix
 tab1_train <- table(pred1_train, train$OverallCond)
 confusionMatrix(tab1_train)
 
 # Accuracy test on Training Dataset
-sum(diag(tab1_train))/sum(tab1_train) # 83.3% classification accuracy based on testing data
-1 - sum(diag(tab1_train))/sum(tab1_train) #16.7% overall miss classification
+sum(diag(tab1_train))/sum(tab1_train) # 89.6% classification accuracy based on testing data
+1 - sum(diag(tab1_train))/sum(tab1_train) #10.4% overall miss classification
 
 # Prediction and Model Assessment
 # Accuracy & Sensitivity for Testing Data
 n1 <-table(train$OverallCond)
 n1
 n1/sum(n1)
-tab1/colSums(tab1_train) #Average classification accuraccy is performing better than Poor and better relatively
+tab1_train/colSums(tab1_train) #Average classification accuraccy is performing better than Poor and better relatively
 
 
 ################################################
 # Logistic Regression Prediction -> TEST DATASET
-pred2_test <- predict(step_mod5, test)
+pred2_test <- predict(step_mod4, test)
 #Confusion Matrix
 tab2_test <- table(pred2_test, test$OverallCond)
 confusionMatrix(tab2_test)
@@ -255,7 +253,7 @@ sum(diag(tab2_test))/sum(tab2_test) # 80.1% classification accuracy based on tes
 n2 <-table(test$OverallCond)
 n2
 n2/sum(n2)
-tab2/colSums(tab2_test) #Average classification accuraccy is performing better than Poor and better relatively
+tab2_test/colSums(tab2_test) #Average classification accuraccy is performing better than Poor and better relatively
 
 
 ###### SVM MODEL ############################################################
@@ -283,13 +281,13 @@ sum(diag(tab3_train))/sum(tab3_train) # 83.3% classification accuracy based on t
 n3 <-table(train$OverallCond)
 n3
 n3/sum(n3)
-tab4_train/colSums(tab3_train)
+tab3_train/colSums(tab3_train)
 
 #####################################
 # SVM prediction -> TESTING DATASET
 pred4_test <- predict(svm_mod, test)
 #Confusion Matrix
-tab4_test <- table(pred3_test, test$OverallCond)
+tab4_test <- table(pred4_test, test$OverallCond)
 confusionMatrix(tab4_test)
 
 #SVM Accuracy test -> on Testing Dataset
@@ -300,7 +298,7 @@ sum(diag(tab4_test))/sum(tab4_test) # 80.1% classification accuracy based on tes
 n4 <-table(test$OverallCond)
 n4
 n4/sum(n4)
-tab2/colSums(tab4_test) #Average classification accuraccy is performing better than Poor and better relatively
+tab4_test/colSums(tab4_test) #Average classification accuraccy is performing better than Poor and better relatively
 
 #############################################################################
 ###  QUESTION 3: Predicting House Prices
