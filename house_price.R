@@ -93,14 +93,6 @@ df0 <- complete(imp_data,3) # use 3rd cycle complete imputed dataset
 
 unique(df$OverallCond)
 
-# Factor all categorical Variables variables
-df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
-
-################ HANDLING NAs - IMPUTAE REMAINING MISSING VALUES ##############
-#impute NAs - In this case, the random forest mice function is used. Random m set to 5
-imp_df <- mice(df1, seed = 123, m=5, method = "rf")
-df0 <- complete(imp_df,3) # use 3rd cycle complete imputed dataset
-
 summary(complete(df0)) ##Summary for Descriptive Statistical Analysis
 
 class(df0)
@@ -110,6 +102,9 @@ unique(df0$OverallCond)
 sapply(df0, function(x) sum(is.na(x))) # good to go!
 sum(is.na(df0))
 
+# Factor all categorical Variables variables
+df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
+       
 #Testing for normality
 # Select all the numerical variables
 num_var <- sapply(df, function(x) is.numeric(x))
