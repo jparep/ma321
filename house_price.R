@@ -500,7 +500,7 @@ errorest(logSalePrice ~ ., data=testing, model=svm,
 numericVars <- which(sapply(df0, is.numeric)) #index vector numeric variables
 numericVarNames <- names(numericVars) #saving names vector for use later on
 all_numVar <- df0[, numericVars]
-all_numVar <- all_numVar[, -22]
+all_numVar <- all_numVar[, -22] #removes Sale price 
 cor_numVar <- cor(all_numVar, use="pairwise.complete.obs") #correlations of all numeric variables
 #sort on decreasing correlations with OverallQual
 cor_sorted <- as.matrix(sort(cor_numVar[,'OverallQual'], decreasing = TRUE))
