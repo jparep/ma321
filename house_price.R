@@ -9,13 +9,15 @@ library("VIM")
 library("DataExplorer")
 library("dlookr")
 library("flextable")
-library('caTools')
+library("caTools")
 library("caret")
 library("nnet")
 library("e1071") #for SVM model
-library(ipred)
-library(randomForest)
-
+library("ipred")
+library("randomForest")
+library("pls")
+library("Metrics")
+library("gmodels")
 
 ################################################################################
 ####  Q1: STATISTICAL Descriptive ANALYSIS
@@ -69,19 +71,27 @@ aggr_plot <- aggr(df, col=c('navyblue','red'),
                   gap=3,
                   ylab=c("Histogram of Missing data","Pattern"))
 
+#Replace the missing categorical variables with 'no' as they imply that a house/property has a missing trait.       
+df[, !(names(data) %in% c("LotFrontage", "MasVnrArea"))][is.na(data[, !(names(data) %in% c("LotFrontage", "MasVnrArea"))])] <- "no"
+View(df)
+str(df)
 
-############## Removing variables with NA > 80%  ##########################################
-# Drop variables with 80% missing data (4 variables here have NA > 80%)
-df1 <- subset(df, select = -c(PoolQC, MiscFeature, Alley, Fence))
-# Also, deselecting irrelevant variables
-df1 <- subset(df1, select = -c(Id, LowQualFinSF, PoolArea, MiscVal, MoSold))
+#view missing variables again
+#No. of missing values in each column of the data frame
+missing_var<-sapply(df, function(x) sum(is.na(x)))
+missing_var
+#Counting variables with missing values 
+missing_counts <- colSums(is.na(df))
+missing_counts
+#Displaying names of variables with missing values 
+missing_var_names <- names(missing_counts[missing_counts > 0])
+missing_var_names
+
+#impute NAs - In this case, the random forest mice function is used. Random m set to 5
+imp_data <- mice(df, seed = 123, m=5, method = "rf")
+df0 <- complete(imp_data,3) # use 3rd cycle complete imputed dataset
 
 unique(df$OverallCond)
-
-#Group houses based on Overall condition
-#OverallCon btween 7-10 is classified as 1 (Good), btwn 4-6 is classifed as 2 (Average),
-# between 1-3 is classified as 3 (Poor) condition
-df1$OverallCond <- with(df1, ifelse(OverallCond <=3, "Poor", ifelse(OverallCond <=6, "Average", "Good")))
 
 # Factor all categorical Variables variables
 df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
@@ -100,86 +110,80 @@ unique(df0$OverallCond)
 sapply(df0, function(x) sum(is.na(x))) # good to go!
 sum(is.na(df0))
 
-########## CORRELATION ########################################################
-#Correlation with 
+#Testing for normality
+# Select all the numerical variables
+num_var <- sapply(df, function(x) is.numeric(x))
+dim(df[, num_var])
+num_var_names <- names(df[, num_var])
+num_var_names
+numerical<- df[, num_var]
+numerical
+# Loop through each column and perform Shapiro-Wilk test
+normality_tests <- lapply(numerical, shapiro.test)
+# Extract the p-values from the normality tests
+p_values <- sapply(normality_tests, function(x) x$p.value)
+# Print the p-values
+print(p_values)
+
+######Identifying outliers
+#Numerical data
+boxplot(numerical[1:6])
+boxplot(numerical[7:13])
+boxplot(numerical[14:22])
+
+#Categorical data
+# Select all the categorical variables
+categorical <- subset(df_allfactor, select = -c(LotFrontage,LotArea,OverallQual,OverallCond,YearBuilt,
+                                                MasVnrArea,TotalBsmtSF,X1stFlrSF,X2ndFlrSF,LowQualFinSF,
+                                                GrLivArea,FullBath,BedroomAbvGr,KitchenAbvGr,TotRmsAbvGrd,
+                                                Fireplaces,GarageArea,PoolArea,MiscVal,MoSold,YrSold, SalePrice))
+categorical
+names(categorical)
+dim(categorical)
+
+#Correlation with sales 
 numericVars <- which(sapply(df, is.numeric)) #index vector numeric variables
 numericVarNames <- names(numericVars) #saving names vector for use later on
 all_numVar <- df[, numericVars]
 cor_numVar <- cor(all_numVar, use="pairwise.complete.obs") #correlations of all numeric variables
 #sort on decreasing correlations with SalePrice
 cor_sorted <- as.matrix(sort(cor_numVar[,'SalePrice'], decreasing = TRUE))
-#select only high corelations
-CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.3 | x < -0.3)))
+#select only high correlations
+CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.3| x< -0.3)))
 cor_numVar <- cor_numVar[CorHigh, CorHigh]
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 
+# calculate the correlations in categorical variables
+categorical2 <- subset(df_transform, select = -c(LotFrontage,LotArea,OverallQual,OverallCond,YearBuilt,
+                                                 MasVnrArea,TotalBsmtSF,X1stFlrSF,X2ndFlrSF,LowQualFinSF,
+                                                 GrLivArea,FullBath,BedroomAbvGr,KitchenAbvGr,TotRmsAbvGrd,
+                                                 Fireplaces,GarageArea,PoolArea,MiscVal,MoSold,YrSold, SalePrice))
+categorical2
+corr1 <- cor(categorical2[1:7]) # Compute the correlation matrix
+corrplot.mixed(corr1, tl.col="black", tl.pos = "lt",
+               title = "Correlation heatmap for categorical variables 1")#correlation heatmap )
 
-# calulate the correlations in numerical variables
-r <- cor(num_df, use="complete.obs")
-round(r,2)
+corr2 <- cor(categorical2[8:14]) # Compute the correlation matrix
+corrplot.mixed(corr2, tl.col="black", tl.pos = "lt",
+               title = "Correlation heatmap for categorical variables 2")#correlation heatmap )
 
-ggcorrplot(r)
+corr3 <- cor(categorical2[15:21]) # Compute the correlation matrix
+corrplot.mixed(corr3, tl.col="black", tl.pos = "lt",
+               title = "Correlation heatmap for categorical variables 3")#correlation heatmap )
 
-ggcorrplot(r, 
-           hc.order = TRUE, 
-           type = "lower",
-           lab = TRUE)
+corr4 <- cor(categorical2[22:28]) # Compute the correlation matrix
+corrplot.mixed(corr4, tl.col="black", tl.pos = "lt",
+               title = "Correlation heatmap for categorical variables 4")#correlation heatmap )
 
-
-##### OUTLIERS  ####################
-length(select_if(df1, is.numeric)) # 14 numberical variables
-names(select_if(df1, is.numeric))
-
-diagnose_numeric(df1) %>% 
-  filter(minus > 0 | zero > 0) %>% 
-  select(variables, median, zero:outlier) %>% 
-  flextable()
-
-# Take average for the outliers to check the influence on variables
-diagnose_outlier(df1) %>% flextable()
-# Get descriptive statistics after imputed
-describe(df1) %>% flextable()
-
-# Plot data with outliers.
-par(mfrow=c(1, 2))
-plot(df$GrLivArea, df$SalePrice, xlim=c(0, 6000), ylim=c(0,700000), main="With Outliers", xlab="GrLive Area", ylab="Sale Price", pch="*", col="red", cex=2)
-abline(lm(SalePrice ~ GrLivArea, data=df), col="blue", lwd=3, lty=2)
-# Plot of original data without outliers. Note the change in slope (angle) of best fit line.
-
-# Check outliers graphically for all the numerical variables 
-# Since outliers in these numerical var contains important info, they are retained
-df0 %>% select(SalePrice) %>%  plot_outlier()   
-df0 %>% select(LotFrontage) %>%  plot_outlier() 
-df0 %>% select(LotArea) %>%  plot_outlier()     
-df0 %>% select(YearBuilt) %>%  plot_outlier()   
-df0 %>% select(MasVnrArea) %>%  plot_outlier()
-df0 %>% select(TotalBsmtSF) %>%  plot_outlier() 
-df0 %>% select(X2ndFlrSF) %>%  plot_outlier()   
-df0 %>% select(LowQualFinSF) %>%  plot_outlier()
-df0 %>% select(GrLivArea) %>%  plot_outlier()   
-df0 %>% select(GarageArea) %>%  plot_outlier()
-df0 %>% select(PoolArea) %>%  plot_outlier()    
-df0 %>% select(MiscVal) %>%  plot_outlier() 
-
-###Normality Test
-normality(df1) %>% flextable()
-
-######  COLLINEARITy #############################
-plot_correlation(na.omit(df1), maxcat = 5L)
-
-data.corr <- as.data.frame(sapply(df, as.numeric))
-
-correlations = cor(data.corr, method = "s")
-# Show variables that have strong correlations with price, focus on coefficient > 0.5 or < -0.5
-corr.price = as.matrix(sort(correlations[,'SalePrice'], decreasing = TRUE))
-corr.id = names(which(apply(corr.price, 1, function(x) (x > 0.05 | x < -0.50))))
-corrplot(as.matrix(correlations[corr.id,corr.id]), type = 'upper', method='color', addCoef.col = 'black', tl.cex = 1,cl.cex = 1, number.cex=1)
-
-sapply(df, function(x) length(unique(x)))
 
 #############################################################################
 ###  QUESTION 2: Logistic Regression to Classifiy Overall House Condition
 #############################################################################
+#Group houses based on Overall condition
+#OverallCon btween 7-10 is classified as 1 (Good), btwn 4-6 is classifed as 2 (Average),
+# between 1-3 is classified as 3 (Poor) condition
+df1$OverallCond <- with(df1, ifelse(OverallCond <=3, "Poor", ifelse(OverallCond <=6, "Average", "Good")))
+
 ############## Training Data ###############################
 set.seed(123) #set seed
 split <- sample.split(df0$OverallCond, SplitRatio = 0.80) #Plit dataset
@@ -446,8 +450,6 @@ errorest(logSalePrice ~ ., data=testing, model=svm,
 #bootstrap
 errorest(logSalePrice ~ ., data=testing, model=svm,
          estimator = 'boot', predict = svm_pred)
-
-
 
 #############################################################################
 ###  QUESTION 4: Research Question in Relation to House Data
