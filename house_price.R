@@ -306,27 +306,6 @@ tab4_test/colSums(tab4_test) #Average classification accuraccy is performing bet
 #############################################################################
 ###  QUESTION 3: Predicting House Prices
 #############################################################################
-
-#SCALE Numerical variables 
-df_scaled <- num_df %>% mutate_if(is.numeric, scale)
-t(summary(df_scaled))
-dfCom <- cbind(cat_df, df_scaled)
-
-
-###### SELECT NUMERICAL VARIABLES ########
-num_df <- unlist(lapply(comppleted_imp_df, is.numeric))
-num_df <- comppleted_imp_df[, num_df]
-
-# Find 0's in num var
-colSums(num_df == 0)
-
-######### SUBSET CATEGORICAL VARIABLEA ########
-cat_df <- unlist(lapply(df0, is.factor))
-cat_df <- df0[, cat_df]
-str(cat_df)
-
-# TO DO - NEED TO SELECT FEATURES FIRST
-count(comppleted_imp_df, OverallCond) #Check the classification distribution
        
 set.seed(123)
 
