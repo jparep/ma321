@@ -362,7 +362,7 @@ plot(x=pred, y=test[,51],
      ylab='Actual Values', col='blue',
      main='A comparison of the actual sale price and those predicted using the random forest model')
 
-#abline shows a 'perfect' gradient
+#abline shows y=x
 abline(a=0,b=1, col='red')
 
 
@@ -432,12 +432,12 @@ x <- 1:length(testing$logSalePrice)
 plot(x, testing$logSalePrice, pch=18, col='red')
 lines(x, svm_pred, col ='blue')
 
-plot(x=svm_pred, y=test[,51],
+plot(x=svm_pred, y=testing[,8],
      xlab='Predicted Values',
      ylab='Actual Values', col='blue',
      main='A comparison of the actual sale price and those predicted using the support vector regression model')
 
-#abline shows a 'perfect' gradient
+#abline shows y=x
 abline(a=0,b=1, col='red')                   
                                
 #10-fold cross validation
