@@ -103,6 +103,7 @@ sapply(df0, function(x) sum(is.na(x))) # good to go!
 sum(is.na(df0))
 
 # Factor all categorical Variables variables
+df1<- data.frame(df)    
 df1[sapply(df1, is.character)] <- lapply(df1[sapply(df1, is.character)], as.factor)
        
 #Testing for normality
