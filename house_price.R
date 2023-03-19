@@ -452,7 +452,74 @@ errorest(logSalePrice ~ ., data=testing, model=svm,
 #############################################################################
 ###  QUESTION 4: Research Question in Relation to House Data
 #############################################################################
+#Correlation with the target variable
+numericVars <- which(sapply(data, is.numeric)) #index vector numeric variables
+numericVarNames <- names(numericVars) #saving names vector for use later on
+all_numVar <- data[, numericVars]
+all_numVar <- all_numVar[, -22]
+cor_numVar <- cor(all_numVar, use="pairwise.complete.obs") #correlations of all numeric variables
+#sort on decreasing correlations with OverallQual
+cor_sorted <- as.matrix(sort(cor_numVar[,'OverallQual'], decreasing = TRUE))
+#select only high correlations
+CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.3| x< -0.3)))
+cor_numVar <- cor_numVar[CorHigh, CorHigh]
+corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
+# Use the caTools package to create random indices for the training and testing sets
+attach(data)
+Q3 <- data.frame(OverallQual,GrLivArea,YearBuilt,GarageArea,
+                 FullBath,TotalBsmtSF,MasVnrArea, Fireplaces)
+set.seed(123)
+split <- sample.split(Q3$OverallQual, SplitRatio = 0.8)
 
+# Create the training and testing sets based on the random indices
+train_data <- Q3[split, ]
+train_data <- data.frame(scale(train_data))#standardize the data
+test_data <- Q3[!split, ]
+test_data <- data.frame(scale(test_data))#standardize the data
+
+# Perform PCA on the training set
+preproc <- preProcess(train_data, method = c("center", "scale"))
+pca_model <- prcomp(predict(preproc, train_data), scale = TRUE)
+
+# !Create a biplot of the principal components
+biplot(pca_model)
+# !Identify outliers
+outliers <- which(pca_model$x[,1] > 2.5 | pca_model$x[,1] < -2.5)
+text(pca_model$x[outliers,1], pca_model$x[outliers,2], labels = rownames(data)[outliers], col = "red", cex = 0.8)
+
+# !Check the sign and magnitude of the loadings
+pca_model$rotation[,1:3]
+
+summary(pca_model)
+
+# Plot the screen plot to determine the number of principal components to retain
+plot(pca_model, type = "l")
+# using Kaiser's criterion to calculate the eigenvalues and determine which components have eigenvalues greater than one
+eig <- eigen(cor(predict(preproc, train_data)))
+eig$values
+# Plot the eigenvalues
+barplot(eig$values, 
+        main = "Scree Plot", 
+        xlab = "Component Number", 
+        ylab = "Eigenvalue")
+# Choose the number of principal components to retain based on the elbow in the screen plot
+num_pcs <- 2
+abline(v = num_pcs, col = "red") # add red line at elbow point
+
+# Use PLS regression to build a predictive model based on the retained principal components
+pls_model <- plsr(OverallQual ~ ., ncomp = num_pcs, data = train_data, scale = TRUE)
+
+# Use the trained PLS model to predict sale prices on the training set
+fitted_model <- predict(pls_model, newdata = train_data)
+
+# Use the trained PLS model to predict sale prices on the testing set
+predictions <- predict(pls_model, newdata = test_data)
+
+# Evaluate the accuracy of the predictions
+rmse <- rmse(predictions, test_data$OverallQual)
+rmse
+r_squared <- R2(pls_model)
+r_squared
 
 
 
