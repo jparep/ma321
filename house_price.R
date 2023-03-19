@@ -133,7 +133,7 @@ boxplot(numerical[14:22])
 
 #Categorical data
 # Select all the categorical variables
-categorical <- subset(df_allfactor, select = -c(LotFrontage,LotArea,OverallQual,OverallCond,YearBuilt,
+categorical <- subset(df1, select = -c(LotFrontage,LotArea,OverallQual,OverallCond,YearBuilt,
                                                 MasVnrArea,TotalBsmtSF,X1stFlrSF,X2ndFlrSF,LowQualFinSF,
                                                 GrLivArea,FullBath,BedroomAbvGr,KitchenAbvGr,TotRmsAbvGrd,
                                                 Fireplaces,GarageArea,PoolArea,MiscVal,MoSold,YrSold, SalePrice))
@@ -154,6 +154,47 @@ cor_numVar <- cor_numVar[CorHigh, CorHigh]
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 
 # calculate the correlations in categorical variables
+ df_transform <- data.frame(df)#Data frame with all numerical variables
+df_transform$Street<- as.numeric(df_transform$Street == "Pave") #Transforming categorical variables to binary numerical values 
+str(df_transform)
+#Transforming 21 categorical variables to nominal numerical values
+dummy_vars <- model.matrix(~ Alley + Utilities + LotConfig + Neighborhood + Condition1 + Condition2
+                          + BldgType + HouseStyle + RoofStyle + RoofMatl + Exterior1st + Foundation
+                           + Heating + Functional + GarageType + GarageCond + PavedDrive + Fence + MiscFeature
+                           + SaleType + SaleCondition- 1, data = df_transform)# put them to a dummy variable
+df_transform <- cbind(df_transform, dummy_vars) # merge the dummy variables with the original data frame
+df_transform =subset(df_transform, select = -c(Alley, Utilities, LotConfig, Neighborhood, Condition1, Condition2,
+                    BldgType, HouseStyle, RoofStyle, RoofMatl, Exterior1st, Foundation, Heating, Functional, 
+                    GarageType, GarageCond, PavedDrive, Fence, MiscFeature, SaleType, SaleCondition))#remove original variables that have been transformed
+df_transform # display the merged data frame
+#Ordinal categorical variables: 
+unique(df_transform$ExterQual)
+df_transform$ExterQual <- factor(df_transform$ExterQual, levels = c("Ex","Gd","TA","Fa"), ordered = TRUE)
+df_transform$ExterQual_num <- as.numeric(df_transform$ExterQual)
+
+unique(df_transform$ExterCond)
+df_transform$ExterCond <- factor(df_transform$ExterCond, levels = c("Ex","Gd","TA","Fa","Po"), ordered = TRUE)
+df_transform$ExterCond_num <- as.numeric(df_transform$ExterCond)
+
+unique(df_transform$BsmtQual)
+df_transform$BsmtQual<- factor(df_transform$BsmtQual, levels = c("Ex","Gd","TA","Fa","Po","no"), ordered = TRUE)
+df_transform$BsmtQual_num <- as.numeric(df_transform$BsmtQual)
+
+unique(df_transform$BsmtCond)
+df_transform$BsmtCond<- factor(df_transform$BsmtCond, levels = c("Gd","TA","Fa","Po","no"), ordered = TRUE)
+df_transform$BsmtCond_num <- as.numeric(df_transform$BsmtCond)
+
+unique(df_transform$KitchenQual)
+df_transform$KitchenQual<- factor(df_transform$KitchenQual, levels = c("Ex","Gd","TA","Fa"), ordered = TRUE)
+df_transform$KitchenQual_num <- as.numeric(df_transform$KitchenQual)
+
+unique(df_transform$PoolQC)
+df_transform$PoolQC<- factor(df_transform$PoolQC, levels = c("Ex","Gd","Fa","no"), ordered = TRUE)
+df_transform$PoolQC_num <- as.numeric(df_transform$PoolQC)
+df_transform =subset(df_transform, select = -c(ExterQual,ExterCond,BsmtQual,BsmtCond,KitchenQual,PoolQC)) #remove original variables that have been transformed
+df_transform # display the merged data frame
+str(df_transform)
+                             
 categorical2 <- subset(df_transform, select = -c(LotFrontage,LotArea,OverallQual,OverallCond,YearBuilt,
                                                  MasVnrArea,TotalBsmtSF,X1stFlrSF,X2ndFlrSF,LowQualFinSF,
                                                  GrLivArea,FullBath,BedroomAbvGr,KitchenAbvGr,TotRmsAbvGrd,
