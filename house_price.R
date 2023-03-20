@@ -553,10 +553,10 @@ abline(v = num_pcs, col = "red") # add red line at elbow point
 # Use PLS regression to build a predictive model based on the retained principal components
 pls_model <- plsr(OverallQual ~ ., ncomp = num_pcs, data = train_data, scale = TRUE)
 
-# Use the trained PLS model to predict sale prices on the training set
+# Use the trained PLS model to predict Overall quality on the training set
 fitted_model <- predict(pls_model, newdata = train_data)
 
-# Use the trained PLS model to predict sale prices on the testing set
+# Use the trained PLS model to predict Overall quality on the testing set
 predictions <- predict(pls_model, newdata = test_data)
 
 # Evaluate the accuracy of the predictions
