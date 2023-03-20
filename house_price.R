@@ -119,7 +119,7 @@ unique(df0$OverallCond)
 # Check for any NA after imputation?
 sapply(df0, function(x) sum(is.na(x))) # good to go!
 sum(is.na(df0))
-       
+
 #Testing for normality
 # Select all the numerical variables
 num_var <- sapply(df, function(x) is.numeric(x))
@@ -154,20 +154,20 @@ cor_numVar <- cor_numVar[CorHigh, CorHigh]
 corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
 
 # calculate the correlations in categorical variables
- df_transform <- data.frame(df)#Data frame with all numerical variables
+df_transform <- data.frame(df)#Data frame with all numerical variables
 df_transform$Street<- as.numeric(df_transform$Street == "Pave") #Transforming categorical variables to binary numerical values 
 str(df_transform)
 #Transforming 21 categorical variables to nominal numerical values
 dummy_vars <- model.matrix(~ Alley + Utilities + LotConfig + Neighborhood + Condition1 + Condition2
-                          + BldgType + HouseStyle + RoofStyle + RoofMatl + Exterior1st + Foundation
+                           + BldgType + HouseStyle + RoofStyle + RoofMatl + Exterior1st + Foundation
                            + Heating + Functional + GarageType + GarageCond + PavedDrive + Fence + MiscFeature
                            + SaleType + SaleCondition- 1, data = df_transform)# put them to a dummy variable
 df_transform <- cbind(df_transform, dummy_vars) # merge the dummy variables with the original data frame
 df_transform =subset(df_transform, select = -c(Alley, Utilities, LotConfig, Neighborhood, Condition1, Condition2,
-                    BldgType, HouseStyle, RoofStyle, RoofMatl, Exterior1st, Foundation, Heating, Functional, 
-                    GarageType, GarageCond, PavedDrive, Fence, MiscFeature, SaleType, SaleCondition))#remove original variables that have been transformed
+                                               BldgType, HouseStyle, RoofStyle, RoofMatl, Exterior1st, Foundation, Heating, Functional, 
+                                               GarageType, GarageCond, PavedDrive, Fence, MiscFeature, SaleType, SaleCondition))#remove original variables that have been transformed
 df_transform # display the merged data frame
-                             
+
 #categorical variables to Ordinal  
 unique(df_transform$ExterQual)
 df_transform$ExterQual <- factor(df_transform$ExterQual, levels = c("Ex","Gd","TA","Fa"), ordered = TRUE)
@@ -195,7 +195,7 @@ df_transform$PoolQC_num <- as.numeric(df_transform$PoolQC)
 df_transform =subset(df_transform, select = -c(ExterQual,ExterCond,BsmtQual,BsmtCond,KitchenQual,PoolQC)) #remove original variables that have been transformed
 df_transform # display the merged data frame
 str(df_transform)
-                             
+
 categorical2 <- subset(df_transform, select = -c(LotFrontage,LotArea,OverallQual,OverallCond,YearBuilt,
                                                  MasVnrArea,TotalBsmtSF,X1stFlrSF,X2ndFlrSF,LowQualFinSF,
                                                  GrLivArea,FullBath,BedroomAbvGr,KitchenAbvGr,TotRmsAbvGrd,
@@ -238,23 +238,23 @@ full_mod1 <- multinom(OverallCond~., family="binomial", data=train)
 
 # Features selected using P-value < 0.5 from full model output
 reduced_mod2 <- multinom(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
-              MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
-              YrSold + SaleType + SalePrice, data=train)
+                           MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
+                           YrSold + SaleType + SalePrice, data=train)
 
 # Features selected from  highly correlation matrix
 corr_mod3 <- multinom(OverallCond ~ Condition1 + YearBuilt + BsmtQual + GrLivArea +
-              Functional + GarageArea + SalePrice + SaleCondition + SaleType + PavedDrive +
-              Fireplaces + GrLivArea + BldgType, data=train)
+                        Functional + GarageArea + SalePrice + SaleCondition + SaleType + PavedDrive +
+                        Fireplaces + GrLivArea + BldgType, data=train)
 
 # Full Step model
 step = step(full_mod1)
 
 # Features selected from Full Step Model
 step_mod4 <- multinom(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
-                   YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
-                   Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
-                   FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
-                   GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
+                        YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
+                        Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
+                        FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
+                        GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
 
 
 summary(full_mod1)        # AIC = 1135.28  
@@ -308,10 +308,10 @@ tab2_test/colSums(tab2_test) #Average classification accuraccy is performing bet
 ###### SVM MODEL ############################################################
 # Features selected from Full Step Model
 svm_mod <- svm(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
-                                YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
-                                Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
-                                FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
-                                GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
+                 YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
+                 Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
+                 FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
+                 GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
 
 summary(svm_mod)
 
@@ -352,7 +352,7 @@ tab4_test/colSums(tab4_test) #Average classification accuraccy is performing bet
 #############################################################################
 ###  QUESTION 3: Predicting House Prices
 #############################################################################
-       
+
 set.seed(123)
 
 summary(df0)
@@ -485,7 +485,7 @@ plot(x=svm_pred, y=testing[,8],
 
 #abline shows y=x
 abline(a=0,b=1, col='red')                   
-                               
+
 #10-fold cross validation
 errorest(logSalePrice ~ ., data=testing, model=svm,
          estimator = 'cv', predict = svm_pred)
@@ -564,7 +564,6 @@ rmse <- rmse(predictions, test_data$OverallQual)
 rmse
 r_squared <- R2(pls_model)
 r_squared
-
 
 
 
