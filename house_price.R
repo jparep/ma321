@@ -36,6 +36,11 @@ library("pls")
 library("Metrics")
 #install.packages(("gmodels")
 library("gmodels")
+#install.packages('randomForest')
+library("randomForest")
+#install.packages("ipred")
+library("ipred")
+
 
 ################################################################################
 ####  Q1: STATISTICAL Descriptive ANALYSIS
@@ -104,6 +109,14 @@ missing_counts
 #Displaying names of variables with missing values 
 missing_var_names <- names(missing_counts[missing_counts > 0])
 missing_var_names
+
+#Group houses based on Overall condition
+#OverallCon btween 7-10 is classified as 1 (Good), btwn 4-6 is classifed as 2 (Average),
+# between 1-3 is classified as 3 (Poor) condition
+df$OverallCond <- with(df, ifelse(OverallCond <=3, "Poor", ifelse(OverallCond <=6, "Average", "Good")))
+unique(df$OverallCond)
+# Factor all categorical Variables variables
+df[sapply(df, is.character)] <- lapply(df[sapply(df, is.character)], as.factor)
 
 #impute NAs - In this case, the random forest mice function is used. Random m set to 5
 imp_data <- mice(df, seed = 123, m=5, method = "rf")
@@ -221,12 +234,7 @@ corrplot.mixed(corr4, tl.col="black", tl.pos = "lt",
 #############################################################################
 ###  QUESTION 2: Logistic Regression to Classifiy Overall House Condition
 #############################################################################
-#Group houses based on Overall condition
-#OverallCon btween 7-10 is classified as 1 (Good), btwn 4-6 is classifed as 2 (Average),
-# between 1-3 is classified as 3 (Poor) condition
-df1$OverallCond <- with(df1, ifelse(OverallCond <=3, "Poor", ifelse(OverallCond <=6, "Average", "Good")))
-
-############## Training Data ###############################
+# Training Data 
 set.seed(123) #set seed
 split <- sample.split(df0$OverallCond, SplitRatio = 0.80) #Plit dataset
 train <- subset(df0, split == TRUE) #Training dataset
@@ -237,9 +245,11 @@ test <- subset(df0, split == FALSE) # Testing dataset
 full_mod1 <- multinom(OverallCond~., family="binomial", data=train)
 
 # Features selected using P-value < 0.5 from full model output
-reduced_mod2 <- multinom(OverallCond ~ Condition1 + HouseStyle + YearBuilt + Exterior1st + Exterior1st +
-                           MasVnrArea + Foundation + TotalBsmtSF + GrLivArea + Functional +GarageArea  +
-                           YrSold + SaleType + SalePrice, data=train)
+reduced_mod2 <- multinom(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
+                           YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
+                           Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
+                           FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
+                           GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
 
 # Features selected from  highly correlation matrix
 corr_mod3 <- multinom(OverallCond ~ Condition1 + YearBuilt + BsmtQual + GrLivArea +
@@ -250,17 +260,18 @@ corr_mod3 <- multinom(OverallCond ~ Condition1 + YearBuilt + BsmtQual + GrLivAre
 step = step(full_mod1)
 
 # Features selected from Full Step Model
-step_mod4 <- multinom(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
-                        YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
-                        Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
-                        FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
-                        GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
+step_mod4 <- multinom(OverallCond ~ LotFrontage + LotArea + Alley + LotConfig + Condition1 + 
+                        BldgType + HouseStyle + OverallQual + YearBuilt + ExterCond + 
+                        Foundation + BsmtQual + BsmtCond + TotalBsmtSF + X1stFlrSF + 
+                        X2ndFlrSF + LowQualFinSF + GrLivArea + BedroomAbvGr + KitchenQual + 
+                        TotRmsAbvGrd + Fireplaces + GarageType + GarageArea + PoolArea + 
+                        Fence + MiscVal + MoSold + YrSold + SaleType + SalePrice, data=train)
 
 
-summary(full_mod1)        # AIC = 1135.28  
-summary(reduced_mod2)        # AIC = 1080.597  
-summary(corr_mod3)        # AIC = 1096.734  
-summary(step_mod4)# AIC = 977.3645  use this model since few features with low AIC value
+summary(full_mod1)        # AIC = 1174.013   
+summary(reduced_mod2)        # AIC = 987.5739  
+summary(corr_mod3)        # AIC = 1099.163  
+summary(step_mod4)# AIC = 921.6711   use this model since few features with low AIC value
 
 ######Prediction ########################
 #2-tailed z test
@@ -307,11 +318,12 @@ tab2_test/colSums(tab2_test) #Average classification accuraccy is performing bet
 
 ###### SVM MODEL ############################################################
 # Features selected from Full Step Model
-svm_mod <- svm(OverallCond ~ Street + Neighborhood + Condition1 + HouseStyle + 
-                 YearBuilt + RoofMatl + Exterior1st + ExterQual + ExterCond + 
-                 Foundation + BsmtQual + BsmtCond + TotalBsmtSF + GrLivArea + 
-                 FullBath + KitchenQual + TotRmsAbvGrd + Fireplaces + GarageArea + 
-                 GarageCond + YrSold + SaleType + SaleCondition + SalePrice, data=train)
+svm_mod <- svm(OverallCond ~ LotFrontage + LotArea + Alley + LotConfig + Condition1 + 
+                 BldgType + HouseStyle + OverallQual + YearBuilt + ExterCond + 
+                 Foundation + BsmtQual + BsmtCond + TotalBsmtSF + X1stFlrSF + 
+                 X2ndFlrSF + LowQualFinSF + GrLivArea + BedroomAbvGr + KitchenQual + 
+                 TotRmsAbvGrd + Fireplaces + GarageType + GarageArea + PoolArea + 
+                 Fence + MiscVal + MoSold + YrSold + SaleType + SalePrice, data=train)
 
 summary(svm_mod)
 
@@ -393,9 +405,6 @@ dim(test)
 
 #Random forest
 require(randomForest)
-#install.packages('randomForest')
-library(randomForest)
-library(ipred)
 
 forest.df <- randomForest(logSalePrice ~ ., data=train)
 forest.df
@@ -553,10 +562,10 @@ abline(v = num_pcs, col = "red") # add red line at elbow point
 # Use PLS regression to build a predictive model based on the retained principal components
 pls_model <- plsr(OverallQual ~ ., ncomp = num_pcs, data = train_data, scale = TRUE)
 
-# Use the trained PLS model to predict Overall quality on the training set
+# Use the trained PLS model to predict sale prices on the training set
 fitted_model <- predict(pls_model, newdata = train_data)
 
-# Use the trained PLS model to predict Overall quality on the testing set
+# Use the trained PLS model to predict sale prices on the testing set
 predictions <- predict(pls_model, newdata = test_data)
 
 # Evaluate the accuracy of the predictions
@@ -564,8 +573,6 @@ rmse <- rmse(predictions, test_data$OverallQual)
 rmse
 r_squared <- R2(pls_model)
 r_squared
-
-
 
 
 
